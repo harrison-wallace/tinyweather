@@ -1,35 +1,68 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { BurgerMenu } from './components/BurgerMenu';
+import { WeatherDisplay } from './components/WeatherDisplay';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+interface WeatherData {
+  temperature: number; // In Celsius from Open-Meteo
+  weatherCode: number;
+  time: string;
 }
 
-export default App
+function App() {
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [tempUnit, setTempUnit] = useState<'C' | 'F'>('C'); // Default to Celsius
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const fetchWeather = async (lat: number, lon: number) => {
+    try {
+      const response = await axios.get(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weather_code&timezone=auto`
+      );
+      const hourly = response.data.hourly;
+      const now = new Date().getHours();
+      setWeather({
+        temperature: hourly.temperature_2m[now],
+        weatherCode: hourly.weather_code[now],
+        time: hourly.time[now],
+      });
+    } catch (error) {
+      console.error('Error fetching weather:', error);
+      setWeather(null);
+    }
+  };
+
+  useEffect(() => {
+    if (location) {
+      fetchWeather(location.lat, location.lon);
+    }
+  }, [location]);
+
+  const handleLocationSubmit = (lat: number, lon: number) => {
+    setLocation({ lat, lon });
+  };
+
+  return (
+    <div className="app">
+      <div className="content">
+        <header>
+          <h1>TinyWeather</h1>
+          <BurgerMenu
+            onLocationSubmit={handleLocationSubmit}
+            tempUnit={tempUnit}
+            setTempUnit={setTempUnit}
+            isOpen={isDrawerOpen}
+            setIsOpen={setIsDrawerOpen}
+          />
+        </header>
+        <main>
+          <WeatherDisplay weather={weather} location={location} tempUnit={tempUnit} />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export default App;
