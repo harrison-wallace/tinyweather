@@ -8,11 +8,22 @@ export default defineConfig({
   publicDir: 'public', 
   build: {
     outDir: 'dist', 
-    emptyOutDir: true, 
+    emptyOutDir: true,
+    target: 'esnext', 
+    minify: 'esbuild', 
+    sourcemap: false, 
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'axios'],
+        },
+      },
+    },
   },
   server: {
-    host: '0.0.0.0',
-    port: process.env.PORT || 4000, 
+    host: '0.0.0.0', 
+    port: 5173,
     open: false,
+    strictPort: false, 
   },
 })
