@@ -12,6 +12,6 @@ RUN npm run build
 FROM node:18-alpine
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
-EXPOSE ${PORT:-3000} 
-ENV PORT=${PORT:-3000} 
+EXPOSE 3000 
+ENV PORT=${PORT:-3000}
 CMD ["sh", "-c", "npx serve -s dist -l $PORT"]
