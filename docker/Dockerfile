@@ -11,6 +11,9 @@ COPY src/ src/
 COPY public/ public/
 COPY vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json eslint.config.js ./
 
+# Debug: List contents of /app/public/ to verify index.html is there
+RUN ls -la /app/public/
+
 # Build the app
 RUN npm run build
 

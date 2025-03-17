@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   root: '.', 
@@ -13,6 +12,7 @@ export default defineConfig({
     minify: 'esbuild', 
     sourcemap: false, 
     rollupOptions: {
+      input: './public/index.html',
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'axios'],
