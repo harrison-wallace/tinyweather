@@ -33,4 +33,4 @@ ENV PORT=${PORT}
 EXPOSE ${PORT}
 
 # Serve the app
-CMD ["sh", "-c", "serve -s dist/public -l $PORT"]
+CMD ["sh", "-c", "serve -s dist -l $PORT"]
