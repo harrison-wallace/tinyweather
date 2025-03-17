@@ -6,13 +6,16 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
 
-# Copy source files
+# Copy index.html from the project root into the container
+COPY index.html ./
+
+# Copy source files and other configuration files
 COPY src/ src/
 COPY public/ public/
 COPY vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json eslint.config.js ./
 
-# Debug: List contents of /app/public/ to verify index.html is there
-RUN ls -la /app/public/
+# Optional: Debug step to verify files
+RUN ls -la /app
 
 # Build the app
 RUN npm run build
