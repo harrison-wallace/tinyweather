@@ -39,7 +39,7 @@ pipeline {
                     sh 'git checkout main'
                     sh 'git reset --hard origin/main'
                     sh 'npm install'
-                    sh 'npm run build' // Explicit build step for production
+                    sh 'npm run build'
                     sh 'docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true'
                     sh 'docker rm -f $CONTAINER_NAME || true'
                     sh 'docker rmi -f $(docker images -q $IMAGE_NAME) || true'
@@ -60,7 +60,7 @@ pipeline {
             environment {
                 IMAGE_NAME = 'tinyweather_dev'
                 CONTAINER_NAME = 'tinyweather_container_dev'
-                NODE_ENV = 'development'
+                NODE_ENV = 'production' // Use production build for dev
                 PORT = '4000'
             }
             steps {
@@ -69,7 +69,7 @@ pipeline {
                     sh 'docker rm -f $CONTAINER_NAME || true'
                     sh 'docker rmi -f $(docker images -q $IMAGE_NAME) || true'
                     sh 'npm install'
-                    // No build step for dev; let the container handle it
+                    sh 'npm run build' // Build for production
                     sh "docker build -f docker/Dockerfile --build-arg NODE_ENV=${NODE_ENV} --build-arg PORT=${PORT} -t $IMAGE_NAME ."
                     sh 'docker run -d --name $CONTAINER_NAME -e PORT=$PORT -p 4000:${PORT} --restart unless-stopped $IMAGE_NAME'
                 }
