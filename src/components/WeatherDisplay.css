@@ -1,0 +1,13 @@
+.weather-card {
+ background-color: #1a1a1a;
+ padding: 2em;
+ border-radius: 8px;
+ text-align: left;
+ max-width: 400px;
+ margin: 0 auto;
+}
+
+.weather-card h2 {
+ margin-top: 0;
+ font-size: 1.5em;
+}

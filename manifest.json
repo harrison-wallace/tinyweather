@@ -1,0 +1,6 @@
+{
+ "deploy": {
+   "dev": true,
+   "prod": false
+ }
+}

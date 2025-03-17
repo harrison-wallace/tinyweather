@@ -1,0 +1,76 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Read manifest') {
+            steps {
+                script {
+                    def manifest = readJSON file: 'manifest.json'
+                    env.DEPLOY_DEV = manifest.deploy.dev ? "true" : "false"
+                    env.DEPLOY_PROD = manifest.deploy.prod ? "true" : "false"
+                }
+            }
+        }
+
+        stage('Declarative: Checkout SCM') {
+            steps {
+                cleanWs()
+                checkout scm
+            }
+        }
+
+        stage('Build for Main (Production)') {
+            when {
+                allOf {
+                    branch 'main'
+                    expression { return env.CHANGE_ID == null }
+                    expression { return env.DEPLOY_PROD == "true" }
+                }
+            }
+            environment {
+                IMAGE_NAME = 'tinyweather'
+                CONTAINER_NAME = 'tinyweather_container'
+                PORT = '3000'
+            }
+            steps {
+                script {
+                    // Clean up previous container and image
+                    sh 'docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true'
+                    sh 'docker rm -f $CONTAINER_NAME || true'
+                    sh 'docker rmi -f $(docker images -q $IMAGE_NAME) || true'
+
+                    // Build and run the Docker image
+                    sh "docker build -f docker/Dockerfile --build-arg PORT=${PORT} -t $IMAGE_NAME ."
+                    sh "docker run -d --name $CONTAINER_NAME -e PORT=$PORT -p 3000:${PORT} --restart unless-stopped $IMAGE_NAME"
+                }
+            }
+        }
+
+        stage('Build for Dev (PR to Main)') {
+            when {
+                allOf {
+                    expression { return env.CHANGE_ID != null }
+                    expression { return env.CHANGE_TARGET == "main" }
+                    expression { return env.DEPLOY_DEV == "true" }
+                }
+            }
+            environment {
+                IMAGE_NAME = 'tinyweather_dev'
+                CONTAINER_NAME = 'tinyweather_container_dev'
+                PORT = '4000'
+            }
+            steps {
+                script {
+                    // Clean up previous container and image
+                    sh 'docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true'
+                    sh 'docker rm -f $CONTAINER_NAME || true'
+                    sh 'docker rmi -f $(docker images -q $IMAGE_NAME) || true'
+
+                    // Build and run the Docker image
+                    sh "docker build -f docker/Dockerfile --build-arg PORT=${PORT} -t $IMAGE_NAME ."
+                    sh "docker run -d --name $CONTAINER_NAME -e PORT=$PORT -p 4000:${PORT} --restart unless-stopped $IMAGE_NAME"
+                }
+            }
+        }
+    }
+}
