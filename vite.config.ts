@@ -12,7 +12,6 @@ export default defineConfig({
     minify: 'esbuild', 
     sourcemap: false, 
     rollupOptions: {
-      input: './public/index.html',
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'axios'],
