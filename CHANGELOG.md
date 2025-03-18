@@ -21,7 +21,10 @@
 - [FEATURE]: `TW-001` - Burger menu for settings 
 - [FEATURE]: `TW-001` - Ability to set coordinates for weather location 
 - [FEATURE]: `TW-001` - Ability to set Celsius or Fahrenheit
-
+- [FEATURE]: `TW-002` - Ability to add and store locations to favorites 
+- [CHANGE]: `TW-002` - Adjusted layout to fill the full screen height and width, removing centered constraint
+- [FEATURE]: `TW-002` - Integrated react-icons for weather condition visuals
+- [BUGFIX]: `TW-002` - Fixed screen not filling vertically due to flexbox and margin issues
 
 ---
 ## [0.1.0] - 2025-03-09
