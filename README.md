@@ -112,10 +112,3 @@ This project is licensed under the [MIT License](LICENSE). See the `LICENSE` fil
 See the [CHANGELOG.md](CHANGELOG.md) file for detailed changes and version history.
 
 ---
-
-### Flexibility and Future Updates
-- **Modular Sections**: Each section (e.g., Features, Installation) can be expanded with bullet points, code snippets, or screenshots as needed.
-- **TODO Placeholders**: These mark areas for future expansion (e.g., deployment instructions, contribution guidelines), making it easy to update without restructuring.
-- **External Links**: References to `CHANGELOG.md` and the license allow you to maintain separate files, keeping the README lightweight.
-- **Version Agnostic**: No specific version is hardcoded, allowing you to add versioning (e.g., `[v1.0.0]`) in the future.
-
