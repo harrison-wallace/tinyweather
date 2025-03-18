@@ -1,15 +1,24 @@
+/* src/App.css */
 .app {
   min-height: 100vh;
   background-color: #242424;
   position: relative;
   overflow-x: hidden; /* Prevent horizontal scroll from drawer */
+  display: flex;
+  flex-direction: column; /* Ensure vertical stacking */
+  flex: 1 0 auto; /* Grow and fill height */
+  width: 100%; /* Ensure full width */
 }
 
 .content {
-  max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  flex: 1 0 auto; /* Allow content to grow and shrink, but not below content */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow shrinking if needed */
+  width: 100%; /* Ensure full width */
 }
 
 header {
@@ -18,6 +27,7 @@ header {
   align-items: center;
   margin-bottom: 2em;
   position: relative;
+  width: 100%; /* Ensure header spans full width */
 }
 
 header h1 {
@@ -26,6 +36,9 @@ header h1 {
 }
 
 main {
+  flex: 1 1 auto; /* Allow main to grow and fill remaining space */
   display: flex;
-  justify-content: center;
+  justify-content: stretch; /* Remove centering, allow full width */
+  width: 100%; /* Ensure full width */
+  max-width: none; /* Remove any max-width constraint */
 }

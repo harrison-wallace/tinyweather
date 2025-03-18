@@ -1,13 +1,90 @@
-.weather-card {
- background-color: #1a1a1a;
+.weather-container {
+ margin: 0; /* Remove centering margin */
+ min-height: 100vh; /* Ensure full height */
+ display: grid;
+ grid-template-columns: 1fr 2fr; /* Today takes 1 part, 7 Days takes 2 parts */
+ gap: 2em;
  padding: 2em;
- border-radius: 8px;
- text-align: left;
- max-width: 400px;
- margin: 0 auto;
+ background: linear-gradient(135deg, #1a1a1a, #2d2d2d); /* Gradient for depth */
+ align-items: stretch; /* Stretch items to fill height */
+ justify-content: stretch; /* Allow full width within grid */
+ width: 100%; /* Ensure it uses full available width */
+ max-width: none; /* Remove the 1200px limit to fill the screen */
 }
 
-.weather-card h2 {
+.weather-card {
+ background-color: #1a1a1a;
+ padding: 1.8em;
+ border-radius: 12px; /* More rounded corners */
+ text-align: left;
+ transition: all 0.3s ease;
+ font-family: "Helvetica Neue", Arial, sans-serif; /* Professional font stack */
+}
+
+.weather-card.today {
+ max-width: 100%; /* Remove fixed width for flexibility */
+}
+
+.weather-card h2,
+.forecast-section h2 {
  margin-top: 0;
- font-size: 1.5em;
+ font-size: 1.7em;
+ font-weight: 700;
+ color: #ffffff;
+ letter-spacing: 0.05em; /* Subtle professional touch */
+}
+
+.weather-card p,
+.forecast-card p {
+ margin: 0.7em 0;
+ color: #e0e0e0;
+ display: flex; /* Ensure icons align with text */
+ align-items: center; /* Vertically center icons and text */
+}
+
+.weather-card p strong,
+.forecast-card p strong {
+ font-weight: 600; /* Bold category names */
+ color: #ffffff;
+ margin-right: 0.5em; /* Space between strong and value/icon */
+}
+
+.weather-card p span.value,
+.forecast-card p span.value {
+ font-family: "Courier New", Courier, monospace; /* Monospace for values */
+ margin-left: 0.5em;
+}
+
+.weather-card p svg,
+.forecast-card p svg {
+ margin-right: 0.5em; /* Space between icon and text */
+}
+
+.forecast-section {
+ /* Handled by grid */
+}
+
+.forecast-list {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+ grid-auto-rows: minmax(200px, auto); /* Masonry-like behavior */
+ gap: 1.5em;
+}
+
+.forecast-card {
+ background-color: #1a1a1a;
+ padding: 1.2em;
+ border-radius: 12px;
+ transition: transform 0.2s;
+}
+
+.forecast-card:hover {
+ transform: scale(1.02); /* Slight scale on hover for interactivity */
+}
+
+.forecast-card h3 {
+ margin: 0 0 0.8em;
+ font-size: 1.15em;
+ font-weight: 500;
+ color: #ffffff;
 }
