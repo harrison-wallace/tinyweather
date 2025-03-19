@@ -103,7 +103,6 @@ This project is licensed under the [MIT License](LICENSE). See the `LICENSE` fil
 - [ ] Add a search-by-city feature to convert city names to lat/lon.
 - [ ] Implement mobile-specific optimizations.
 - [ ] Add animated transitions for weather updates.
-- [ ] Include a footer with additional info or links.
 - [ ] Change theme
 
 
