@@ -79,24 +79,25 @@ export const BurgerMenu = ({
         ☰
       </button>
       {isOpen && (
-        <div className="burger-menu-overlay" onClick={() => setIsOpen(false)}>
-          <div className="burger-menu-drawer" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ color: '#fff', margin: 0 }}>Settings</h3>
-              <button
-                className="close-button"
-                onClick={() => setIsOpen(false)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#ddd',
-                  fontSize: '1.5rem',
-                  cursor: 'pointer',
-                }}
-              >
-                ✖
-              </button>
-            </div>
+      <div className="burger-menu-overlay" onClick={() => setIsOpen(false)}>
+        <div className="burger-menu-drawer" onClick={(e) => e.stopPropagation()}>
+          <h1 style={{ color: '#fff', margin: '0 0 1em 0', fontSize: '1.5rem' }}>TinyWeather</h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ color: '#fff', margin: 0 }}>Settings</h3>
+            <button
+              className="close-button"
+              onClick={() => setIsOpen(false)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#ddd',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+              }}
+            >
+              ✖
+            </button>
+          </div>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.5em', marginTop: '1em' }}>
               <label style={{ color: '#fff' }}>
                 Latitude:

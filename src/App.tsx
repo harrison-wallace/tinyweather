@@ -160,9 +160,8 @@ function App() {
   return (
     <div className="app">
       <div className="content">
-        <header>
-          <h1>TinyWeather</h1>
-          <BurgerMenu
+        <main>
+        <BurgerMenu
             onLocationSubmit={handleLocationSubmit}
             tempUnit={tempUnit}
             setTempUnit={setTempUnit}
@@ -173,8 +172,6 @@ function App() {
             favorites={favorites}
             selectFavorite={selectFavorite}
           />
-        </header>
-        <main>
           <WeatherDisplay
             todayWeather={todayWeather}
             dailyForecast={dailyForecast}

@@ -12,7 +12,6 @@
 
 .content {
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
   flex: 1 0 auto; /* Allow content to grow and shrink, but not below content */
   display: flex;
@@ -23,22 +22,26 @@
 
 header {
   display: flex;
-  justify-content: space-between; /* Align title and button on opposite sides */
+  justify-content: flex-end; /* Align BurgerMenu to the right */
   align-items: center;
-  margin-bottom: 2em;
+  margin-bottom: 1em;
   position: relative;
-  width: 100%; /* Ensure header spans full width */
-}
-
-header h1 {
-  margin: 0;
-  color: #fff;
+  width: 100%;
 }
 
 main {
-  flex: 1 1 auto; /* Allow main to grow and fill remaining space */
+  flex: 1 1 auto;
   display: flex;
-  justify-content: stretch; /* Remove centering, allow full width */
-  width: 100%; /* Ensure full width */
-  max-width: none; /* Remove any max-width constraint */
+  justify-content: stretch;
+  width: 100%;
+  max-width: none;
+  position: relative; /* Ensure we can position the BurgerMenu absolutely */
+}
+
+/* Position the BurgerMenu in the top-left corner */
+.burger-menu {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: transparent; /* Reinforce transparency */
 }

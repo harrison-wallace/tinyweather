@@ -1,6 +1,6 @@
-// src/components/WeatherDisplay.tsx
-import { WiDaySunny, WiCloudy, WiRain, WiFog, WiSnow, WiNa } from 'react-icons/wi'; // Added WiNa for unknown
+import { WiDaySunny, WiCloudy, WiRain, WiFog, WiSnow, WiNa } from 'react-icons/wi';
 import './WeatherDisplay.css';
+import React from 'react';
 
 interface TodayWeather {
   temperature: number;
@@ -58,24 +58,32 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
 
   const weatherDescription = (code: number) => {
     switch (code) {
-      case 0: return 'Clear sky';
-      case 1: case 2: case 3: return 'Partly cloudy';
+      case 0: return 'Clear';
+      case 1: case 2: case 3: return 'Partly\n Cloudy';
       case 45: case 48: return 'Fog';
       case 61: case 63: case 65: return 'Rain';
       case 71: case 73: case 75: return 'Snow';
       default: return 'Unknown';
     }
   };
-
-  const getWeatherIcon = (code: number) => {
-    switch (code) {
-      case 0: return <WiDaySunny size={24} color="#ffffff" />;
-      case 1: case 2: case 3: return <WiCloudy size={24} color="#ffffff" />;
-      case 45: case 48: return <WiFog size={24} color="#ffffff" />;
-      case 61: case 63: case 65: return <WiRain size={24} color="#ffffff" />;
-      case 71: case 73: case 75: return <WiSnow size={24} color="#ffffff" />;
-      default: return <WiNa size={24} color="#ffffff" />; // Fallback for unknown codes
-    }
+  
+  const getWeatherIcon = (code: number, size: number = 40) => {
+    const icons: { [key: number]: React.ReactElement } = {
+      0: <WiDaySunny size={size} color="#ffffff" />,
+      1: <WiCloudy size={size} color="#ffffff" />,
+      2: <WiCloudy size={size} color="#ffffff" />,
+      3: <WiCloudy size={size} color="#ffffff" />,
+      45: <WiFog size={size} color="#ffffff" />,
+      48: <WiFog size={size} color="#ffffff" />,
+      61: <WiRain size={size} color="#ffffff" />,
+      63: <WiRain size={size} color="#ffffff" />,
+      65: <WiRain size={size} color="#ffffff" />,
+      71: <WiSnow size={size} color="#ffffff" />,
+      73: <WiSnow size={size} color="#ffffff" />,
+      75: <WiSnow size={size} color="#ffffff" />,
+    };
+  
+    return icons[code] || <WiNa size={size} color="#ffffff" />;
   };
 
   const windDirectionText = (degrees: number) => {
@@ -91,44 +99,50 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
 
   return (
     <div className="weather-container">
-      {/* Today Section */}
+      {/* Today Section*/}
       <div className="weather-card today">
         <h2>Today at {locationDisplay}</h2>
-        <p><strong>Temperature:</strong> <span className="value">{convertTemp(todayWeather.temperature).toFixed(1)}°{tempUnit}</span></p>
-        <p><strong>Feels Like:</strong> <span className="value">{convertTemp(todayWeather.apparentTemperature).toFixed(1)}°{tempUnit}</span></p>
-        <p><strong>Dew Point:</strong> <span className="value">{convertTemp(todayWeather.dewpoint).toFixed(1)}°{tempUnit}</span></p>
-        <p>
-          <strong>Conditions:</strong> {getWeatherIcon(todayWeather.weatherCode)} {weatherDescription(todayWeather.weatherCode)}
-        </p>
-        <p><strong>Precipitation:</strong> <span className="value">{todayWeather.precipitation} mm</span> (Rain: <span className="value">{todayWeather.rain} mm</span>, Snow: <span className="value">{todayWeather.snowfall} cm</span>)</p>
-        <p><strong>Precipitation Chance:</strong> <span className="value">{todayWeather.precipitationProbability}%</span></p>
-        <p><strong>Wind:</strong> <span className="value">{convertWindSpeed(todayWeather.windSpeed).toFixed(1)}</span> <span className="value">{tempUnit === 'F' ? 'mph' : 'km/h'}</span> <span className="value">{windDirectionText(todayWeather.windDirection)}</span></p>
-        <p><strong>Cloud Cover:</strong> <span className="value">{todayWeather.cloudCover}%</span></p>
-        <p><strong>Visibility:</strong> <span className="value">{convertVisibility(todayWeather.visibility).toFixed(1)}</span> <span className="value">{tempUnit === 'F' ? 'mi' : 'km'}</span></p>
-        <p><strong>Humidity:</strong> <span className="value">{todayWeather.humidity}%</span></p>
-        <p><strong>High:</strong> <span className="value">{convertTemp(dailyForecast[0].tempMax).toFixed(1)}°{tempUnit}</span></p>
-        <p><strong>Low:</strong> <span className="value">{convertTemp(dailyForecast[0].tempMin).toFixed(1)}°{tempUnit}</span></p>
-        <p><strong>Sunrise:</strong> {new Date(dailyForecast[0].sunrise).toLocaleTimeString()}</p>
-        <p><strong>Sunset:</strong> {new Date(dailyForecast[0].sunset).toLocaleTimeString()}</p>
-        <p><strong>Updated:</strong> {new Date(todayWeather.time).toLocaleTimeString()}</p>
+        <div className="current-weather">
+          <div className="temperature-section">
+            {getWeatherIcon(todayWeather.weatherCode, 90)}
+            <span className="temperature">{convertTemp(todayWeather.temperature).toFixed(0)}°{tempUnit}</span>
+          </div>
+          <p className="condition"><strong>{weatherDescription(todayWeather.weatherCode)}</strong></p>
+          <p className="feels-like">RealFeel® <span className="value">{convertTemp(todayWeather.apparentTemperature).toFixed(0)}°</span></p>
+        </div>
+        <div className="key-metrics">
+          <p><strong>High:</strong> <span className="value">{convertTemp(dailyForecast[0].tempMax).toFixed(0)}°{tempUnit}</span></p>
+          <p><strong>Low:</strong> <span className="value">{convertTemp(dailyForecast[0].tempMin).toFixed(0)}°{tempUnit}</span></p>
+          <p><strong>Wind:</strong> <span className="value">{windDirectionText(todayWeather.windDirection)} {convertWindSpeed(todayWeather.windSpeed).toFixed(0)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
+        </div>
+        <div className="additional-metrics">
+          <p><strong>Precipitation:</strong> <span className="value">{todayWeather.precipitation}mm</span></p>
+          <p><strong>Precipitation Chance:</strong> <span className="value">{todayWeather.precipitationProbability}%</span></p>
+          <p><strong>Snow:</strong> <span className="value">{todayWeather.snowfall}cm</span></p>
+          <p><strong>Humidity:</strong> <span className="value">{todayWeather.humidity}%</span></p>
+          <p><strong>Visibility:</strong> <span className="value">{convertVisibility(todayWeather.visibility).toFixed(1)} {tempUnit === 'F' ? 'mi' : 'km'}</span></p>
+          <p><strong>Cloud Cover:</strong> <span className="value">{todayWeather.cloudCover}%</span></p>
+          <p><strong>Dew Point:</strong> <span className="value">{convertTemp(todayWeather.dewpoint).toFixed(0)}°{tempUnit}</span></p>
+          <p><strong>🌅</strong> {new Date(dailyForecast[0].sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+          <p><strong>🌇</strong> {new Date(dailyForecast[0].sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+        </div>
+        <p className="updated">Updated: {new Date(todayWeather.time).toLocaleTimeString()}</p>
       </div>
 
-      {/* 7-Day Forecast Section */}
+      {/* Next 7 Days Section*/}
       <div className="forecast-section">
-        <h2>Next 7 Days</h2>
         <div className="forecast-list">
-          {dailyForecast.map((day, index) => (
+          {dailyForecast.slice(0, 7).map((day, index) => (
             <div key={index} className="forecast-card">
               <h3>{new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</h3>
+              <p>{getWeatherIcon(day.weatherCode)}</p>
+              <p><strong>Conditions:</strong> {weatherDescription(day.weatherCode)}</p>
               <p><strong>High:</strong> <span className="value">{convertTemp(day.tempMax).toFixed(1)}°{tempUnit}</span></p>
               <p><strong>Low:</strong> <span className="value">{convertTemp(day.tempMin).toFixed(1)}°{tempUnit}</span></p>
               <p><strong>Precipitation:</strong> <span className="value">{day.precipitationSum} mm</span></p>
-              <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)}</span> <span className="value">{tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
-              <p>
-                <strong>Conditions:</strong> {getWeatherIcon(day.weatherCode)} {weatherDescription(day.weatherCode)}
-              </p>
-              <p><strong>Sunrise:</strong> {new Date(day.sunrise).toLocaleTimeString()}</p>
-              <p><strong>Sunset:</strong> {new Date(day.sunset).toLocaleTimeString()}</p>
+              <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
+              <p><strong>🌅</strong> {new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+              <p><strong>🌇</strong> {new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
             </div>
           ))}
         </div>
