@@ -99,7 +99,7 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
 
   return (
     <div className="weather-container">
-      {/* Today Section (as provided) */}
+      {/* Today Section*/}
       <div className="weather-card today">
         <h2>Today at {locationDisplay}</h2>
         <div className="current-weather">
@@ -129,7 +129,7 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
         <p className="updated">Updated: {new Date(todayWeather.time).toLocaleTimeString()}</p>
       </div>
 
-      {/* Next 7 Days Section (Fixed) */}
+      {/* Next 7 Days Section*/}
       <div className="forecast-section">
         <div className="forecast-list">
           {dailyForecast.slice(0, 7).map((day, index) => (
