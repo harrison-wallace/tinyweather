@@ -1,28 +1,31 @@
 /* src/App.css */
 .app {
   min-height: 100vh;
-  background-color: #242424;
+  background: 
+    radial-gradient(ellipse at top, rgba(40, 40, 40, 0.3), transparent 50%),
+    radial-gradient(ellipse at bottom, rgba(20, 20, 20, 0.5), transparent 50%),
+    linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
   position: relative;
-  overflow-x: hidden; /* Prevent horizontal scroll from drawer */
+  overflow-x: hidden;
   display: flex;
-  flex-direction: column; /* Ensure vertical stacking */
-  flex: 1 0 auto; /* Grow and fill height */
-  width: 100%; /* Ensure full width */
+  flex-direction: column;
+  flex: 1 0 auto;
+  width: 100%;
 }
 
 .content {
   margin: 0 auto;
   text-align: center;
-  flex: 1 0 auto; /* Allow content to grow and shrink, but not below content */
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* Allow shrinking if needed */
-  width: 100%; /* Ensure full width */
+  min-height: 0;
+  width: 100%;
 }
 
 header {
   display: flex;
-  justify-content: flex-end; /* Align BurgerMenu to the right */
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 1em;
   position: relative;
@@ -35,7 +38,7 @@ main {
   justify-content: stretch;
   width: 100%;
   max-width: none;
-  position: relative; /* Ensure we can position the BurgerMenu absolutely */
+  position: relative;
 }
 
 /* Position the BurgerMenu in the top-left corner */
@@ -43,5 +46,6 @@ main {
   position: absolute;
   top: 1rem;
   left: 1rem;
-  background: transparent; /* Reinforce transparency */
+  z-index: 1000;
+  background: transparent;
 }

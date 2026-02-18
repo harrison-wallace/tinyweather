@@ -50,6 +50,14 @@ function App() {
   const [todayWeather, setTodayWeather] = useState<TodayWeather | null>(null);
   const [dailyForecast, setDailyForecast] = useState<DailyForecast[]>([]);
   const [tempUnit, setTempUnit] = useState<'C' | 'F'>('C');
+  const [textSize, setTextSize] = useState<'small' | 'medium' | 'large'>(() => {
+    const savedTextSize = localStorage.getItem('textSize');
+    return (savedTextSize as 'small' | 'medium' | 'large') || 'medium';
+  });
+  const [animationsEnabled, setAnimationsEnabled] = useState<boolean>(() => {
+    const savedAnimations = localStorage.getItem('animationsEnabled');
+    return savedAnimations !== null ? JSON.parse(savedAnimations) : true;
+  });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false); // Ensure setIsOpen is defined
   const [favorites, setFavorites] = useState<FavoriteLocation[]>(() => {
     const savedFavorites = localStorage.getItem('favoriteLocations');
@@ -59,6 +67,14 @@ function App() {
   useEffect(() => {
     localStorage.setItem('favoriteLocations', JSON.stringify(favorites));
   }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem('textSize', textSize);
+  }, [textSize]);
+
+  useEffect(() => {
+    localStorage.setItem('animationsEnabled', JSON.stringify(animationsEnabled));
+  }, [animationsEnabled]);
 
   useEffect(() => {
     if (location) {
@@ -158,13 +174,17 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app text-size-${textSize}`}>
       <div className="content">
         <main>
         <BurgerMenu
             onLocationSubmit={handleLocationSubmit}
             tempUnit={tempUnit}
             setTempUnit={setTempUnit}
+            textSize={textSize}
+            setTextSize={setTextSize}
+            animationsEnabled={animationsEnabled}
+            setAnimationsEnabled={setAnimationsEnabled}
             isOpen={isDrawerOpen}
             setIsOpen={setIsDrawerOpen} // Pass setIsOpen correctly
             addFavorite={addFavorite}
@@ -178,6 +198,7 @@ function App() {
             location={location}
             tempUnit={tempUnit}
             favorites={favorites}
+            animationsEnabled={animationsEnabled}
           />
         </main>
       </div>
