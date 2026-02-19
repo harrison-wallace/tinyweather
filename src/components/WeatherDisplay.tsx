@@ -1,6 +1,7 @@
 import { WiDaySunny, WiCloudy, WiRain, WiFog, WiSnow, WiNa } from 'react-icons/wi';
 import './WeatherDisplay.css';
 import React from 'react';
+import { getMoonPhaseName } from '../services/moonPhaseService';
 
 interface TodayWeather {
   temperature: number;
@@ -28,6 +29,8 @@ interface DailyForecast {
   sunset: string;
   windSpeedMax: number;
   weatherCode: number;
+  moonPhase: number;
+  moonIllumination: number;
 }
 
 interface Location {
@@ -256,6 +259,7 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
           <div className="sun-times">
             <p><strong>🌅</strong> {new Date(dailyForecast[0].sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
             <p><strong>🌇</strong> {new Date(dailyForecast[0].sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+            <p><strong>🌙</strong> {getMoonPhaseName(dailyForecast[0].moonPhase)} ({dailyForecast[0].moonIllumination}%)</p>
           </div>
         </div>
         <p className="updated">Updated: {new Date(todayWeather.time).toLocaleTimeString()}</p>
@@ -273,9 +277,10 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
               <p><strong>High:</strong> <span className="value">{convertTemp(day.tempMax).toFixed(1)}°{tempUnit}</span></p>
               <p><strong>Low:</strong> <span className="value">{convertTemp(day.tempMin).toFixed(1)}°{tempUnit}</span></p>
               <p><strong>Precipitation:</strong> <span className="value">{day.precipitationSum} mm</span></p>
-              <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
-              <p><strong>🌅</strong> {new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
-              <p><strong>🌇</strong> {new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+               <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
+               <p><strong>🌅</strong> {new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+               <p><strong>🌇</strong> {new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+               <p><strong>🌙</strong> {getMoonPhaseName(day.moonPhase)} ({day.moonIllumination}%)</p>
             </div>
           ))}
         </div>

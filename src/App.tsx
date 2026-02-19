@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BurgerMenu } from './components/BurgerMenu';
 import { WeatherDisplay } from './components/WeatherDisplay';
+import { calculateMoonPhase, calculateMoonIllumination } from './services/moonPhaseService';
 import './App.css';
 
 interface Location {
@@ -40,6 +41,8 @@ interface DailyForecast {
   sunset: string; // ISO 8601 timestamp
   windSpeedMax: number;
   weatherCode: number;
+  moonPhase: number; // 0-1 where 0 and 1 are new moon, 0.5 is full moon
+  moonIllumination: number; // 0-100 percentage
 }
 
 function App() {
@@ -111,16 +114,21 @@ function App() {
       });
 
       setDailyForecast(
-        daily.time.map((date: string, index: number) => ({
-          date,
-          tempMax: daily.temperature_2m_max[index],
-          tempMin: daily.temperature_2m_min[index],
-          precipitationSum: daily.precipitation_sum[index],
-          sunrise: daily.sunrise[index],
-          sunset: daily.sunset[index],
-          windSpeedMax: daily.windspeed_10m_max[index],
-          weatherCode: daily.weathercode[index],
-        }))
+        daily.time.map((date: string, index: number) => {
+          const dateObj = new Date(date);
+          return {
+            date,
+            tempMax: daily.temperature_2m_max[index],
+            tempMin: daily.temperature_2m_min[index],
+            precipitationSum: daily.precipitation_sum[index],
+            sunrise: daily.sunrise[index],
+            sunset: daily.sunset[index],
+            windSpeedMax: daily.windspeed_10m_max[index],
+            weatherCode: daily.weathercode[index],
+            moonPhase: calculateMoonPhase(dateObj),
+            moonIllumination: calculateMoonIllumination(dateObj),
+          };
+        })
       );
     } catch (error) {
       console.error('Error fetching weather:', error);
