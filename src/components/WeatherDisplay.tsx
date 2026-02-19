@@ -257,9 +257,18 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
           <p><strong>Cloud Cover:</strong> <span className="value">{todayWeather.cloudCover}%</span></p>
           <p><strong>Dew Point:</strong> <span className="value">{convertTemp(todayWeather.dewpoint).toFixed(0)}°{tempUnit}</span></p>
           <div className="sun-times">
-            <p><strong>🌅</strong> {new Date(dailyForecast[0].sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
-            <p><strong>🌇</strong> {new Date(dailyForecast[0].sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
-            <p><strong>🌙</strong> {getMoonPhaseName(dailyForecast[0].moonPhase)} ({dailyForecast[0].moonIllumination}%)</p>
+            <div className="sun-time-item">
+              <span className="sun-moon-icon">🌅</span>
+              <span className="sun-moon-text">{new Date(dailyForecast[0].sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+            </div>
+            <div className="sun-time-item">
+              <span className="sun-moon-icon">🌇</span>
+              <span className="sun-moon-text">{new Date(dailyForecast[0].sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+            </div>
+            <div className="sun-time-item">
+              <span className="sun-moon-icon">🌙</span>
+              <span className="sun-moon-text">{getMoonPhaseName(dailyForecast[0].moonPhase)}<br/>({dailyForecast[0].moonIllumination}%)</span>
+            </div>
           </div>
         </div>
         <p className="updated">Updated: {new Date(todayWeather.time).toLocaleTimeString()}</p>
@@ -279,9 +288,18 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
               <p><strong>Precipitation:</strong> <span className="value">{day.precipitationSum} mm</span></p>
                <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
                <div className="sun-moon-info">
-                 <p><strong>🌅</strong> {new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
-                 <p><strong>🌇</strong> {new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
-                 <p><strong>🌙</strong> {getMoonPhaseName(day.moonPhase)} ({day.moonIllumination}%)</p>
+                 <div className="sun-time-item">
+                   <span className="sun-moon-icon">🌅</span>
+                   <span className="sun-moon-text">{new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                 </div>
+                 <div className="sun-time-item">
+                   <span className="sun-moon-icon">🌇</span>
+                   <span className="sun-moon-text">{new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                 </div>
+                 <div className="sun-time-item">
+                   <span className="sun-moon-icon">🌙</span>
+                   <span className="sun-moon-text">{getMoonPhaseName(day.moonPhase)}<br/>({day.moonIllumination}%)</span>
+                 </div>
                </div>
             </div>
           ))}
