@@ -149,12 +149,20 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
   const findBestDayIndex = (forecast: DailyForecast[]): number => {
     let bestIndex = 0;
     let bestScore = -1;
+    let bestTemp = -999;
 
     forecast.forEach((day, index) => {
       const score = calculateWeatherScore(day);
       if (score > bestScore) {
         bestScore = score;
+        bestTemp = day.tempMax;
         bestIndex = index;
+      } else if (score === bestScore) {
+        // Tiebreaker: higher temperature wins
+        if (day.tempMax > bestTemp) {
+          bestTemp = day.tempMax;
+          bestIndex = index;
+        }
       }
     });
 
