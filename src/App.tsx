@@ -90,7 +90,7 @@ function App() {
   const fetchWeather = async (lat: number, lon: number) => {
     try {
       const response = await axios.get(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,apparent_temperature,dewpoint_2m,precipitation,rain,snowfall,precipitation_probability,windspeed_10m,winddirection_10m,cloudcover,visibility,relativehumidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset,windspeed_10m_max,weathercode&timezone=auto`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,apparent_temperature,dewpoint_2m,precipitation,rain,snowfall,precipitation_probability,windspeed_10m,winddirection_10m,cloudcover,visibility,relativehumidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset,windspeed_10m_max,weathercode&forecast_days=8&timezone=auto`
       );
       const hourly = response.data.hourly;
       const daily = response.data.daily;
