@@ -257,17 +257,19 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
           <p><strong>Cloud Cover:</strong> <span className="value">{todayWeather.cloudCover}%</span></p>
           <p><strong>Dew Point:</strong> <span className="value">{convertTemp(todayWeather.dewpoint).toFixed(0)}°{tempUnit}</span></p>
           <div className="sun-times">
-            <div className="sun-time-item">
-              <span className="sun-moon-icon">🌅</span>
-              <span className="sun-moon-text">{new Date(dailyForecast[0].sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+            <div className="sun-pair">
+              <div className="sun-time-item">
+                <span className="sun-moon-icon">🌅</span>
+                <span className="sun-moon-text">{new Date(dailyForecast[0].sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+              </div>
+              <div className="sun-time-item">
+                <span className="sun-moon-icon">🌇</span>
+                <span className="sun-moon-text">{new Date(dailyForecast[0].sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+              </div>
             </div>
-            <div className="sun-time-item">
-              <span className="sun-moon-icon">🌇</span>
-              <span className="sun-moon-text">{new Date(dailyForecast[0].sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-            </div>
-            <div className="sun-time-item">
+            <div className="moon-item">
               <span className="sun-moon-icon">🌙</span>
-              <span className="sun-moon-text">{getMoonPhaseName(dailyForecast[0].moonPhase)}<br/>({dailyForecast[0].moonIllumination}%)</span>
+              <span className="sun-moon-text">{getMoonPhaseName(dailyForecast[0].moonPhase)} ({dailyForecast[0].moonIllumination}%)</span>
             </div>
           </div>
         </div>
@@ -281,24 +283,26 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
             <div key={index} className={`forecast-card ${animationsEnabled ? getWeatherClass(day.weatherCode) : ''}`}>
               {renderParticles(day.weatherCode, false, index + 2)}
               <h3>{new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</h3>
-              <p>{getWeatherIcon(day.weatherCode)}</p>
+              <p className="weather-icon-container">{getWeatherIcon(day.weatherCode)}</p>
               <p><strong>Conditions:</strong> {weatherDescription(day.weatherCode)}</p>
               <p><strong>High:</strong> <span className="value">{convertTemp(day.tempMax).toFixed(1)}°{tempUnit}</span></p>
               <p><strong>Low:</strong> <span className="value">{convertTemp(day.tempMin).toFixed(1)}°{tempUnit}</span></p>
               <p><strong>Precipitation:</strong> <span className="value">{day.precipitationSum} mm</span></p>
                <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
                <div className="sun-moon-info">
-                 <div className="sun-time-item">
-                   <span className="sun-moon-icon">🌅</span>
-                   <span className="sun-moon-text">{new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                 <div className="sun-pair">
+                   <div className="sun-time-item">
+                     <span className="sun-moon-icon">🌅</span>
+                     <span className="sun-moon-text">{new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                   </div>
+                   <div className="sun-time-item">
+                     <span className="sun-moon-icon">🌇</span>
+                     <span className="sun-moon-text">{new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                   </div>
                  </div>
-                 <div className="sun-time-item">
-                   <span className="sun-moon-icon">🌇</span>
-                   <span className="sun-moon-text">{new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                 </div>
-                 <div className="sun-time-item">
+                 <div className="moon-item">
                    <span className="sun-moon-icon">🌙</span>
-                   <span className="sun-moon-text">{getMoonPhaseName(day.moonPhase)}<br/>({day.moonIllumination}%)</span>
+                   <span className="sun-moon-text">{getMoonPhaseName(day.moonPhase)} ({day.moonIllumination}%)</span>
                  </div>
                </div>
             </div>

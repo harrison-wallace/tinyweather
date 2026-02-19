@@ -174,8 +174,9 @@
 .sun-times {
   grid-column: 1 / -1;
   display: flex;
-  gap: var(--space-lg);
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
   position: relative;
   z-index: 10;
   background: rgba(0, 0, 0, 0.4);
@@ -184,17 +185,31 @@
   margin-top: var(--space-sm);
 }
 
+.sun-pair {
+  display: flex;
+  gap: var(--space-lg);
+  justify-content: center;
+}
+
 .sun-time-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   gap: var(--space-xs);
-  min-width: 80px;
+  min-width: 60px;
+}
+
+.moon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-xs);
 }
 
 .sun-moon-icon {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   line-height: 1;
 }
 
@@ -203,15 +218,14 @@
   color: #ffffff;
   font-family: var(--font-mono);
   line-height: 1.3;
-  white-space: nowrap;
 }
 
 .sun-moon-info {
   grid-column: 1 / -1;
   display: flex;
-  flex-wrap: nowrap;
-  gap: var(--space-md);
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
   position: relative;
   z-index: 10;
   background: rgba(0, 0, 0, 0.3);
@@ -220,20 +234,25 @@
   margin-top: var(--space-xs);
 }
 
+.sun-moon-info .sun-pair {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
 .sun-moon-info .sun-time-item {
   flex: 0 0 auto;
-  min-width: 70px;
+  min-width: 50px;
 }
 
 .sun-moon-info .sun-moon-icon {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
 }
 
 .sun-moon-info .sun-moon-text {
   font-size: var(--text-xs);
   color: #ffffff;
   font-family: var(--font-mono);
-  white-space: nowrap;
 }
 
 .updated {
@@ -317,6 +336,11 @@
   display: flex;
   align-items: center;
   font-size: var(--text-sm);
+}
+
+.weather-icon-container {
+  justify-content: center;
+  margin: var(--space-sm) 0;
 }
 
 .forecast-card p strong {
