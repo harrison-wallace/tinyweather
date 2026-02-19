@@ -309,7 +309,13 @@
   transition: all var(--transition-fast);
   line-height: 1.5;
   animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
-  min-height: 320px;
+  min-height: 352px;
+}
+
+.forecast-card p .value:first-child {
+  text-align: center;
+  display: block;
+  width: 100%;
 }
 
 .forecast-card.best-day {
