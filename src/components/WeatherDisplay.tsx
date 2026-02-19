@@ -105,6 +105,62 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
     return '';
   };
 
+  // Calculate weather score for a day (0-100 scale)
+  const calculateWeatherScore = (day: DailyForecast): number => {
+    let score = 0;
+
+    // No rain (major positive): +50 points
+    if (day.precipitationSum === 0) {
+      score += 50;
+    }
+
+    // Clear skies (major positive): +40 points, Partly cloudy: +20 points
+    if (day.weatherCode === 0) {
+      score += 40;
+    } else if (day.weatherCode >= 1 && day.weatherCode <= 3) {
+      score += 20;
+    }
+
+    // Comfortable temperature 18-25°C (moderate positive): +30 points
+    const tempAvg = (day.tempMax + day.tempMin) / 2;
+    if (tempAvg >= 18 && tempAvg <= 25) {
+      score += 30;
+    } else if (tempAvg >= 15 && tempAvg <= 28) {
+      score += 15; // Somewhat comfortable
+    }
+
+    // Low wind (minor positive): +10 points
+    if (day.windSpeedMax < 20) {
+      score += 10;
+    } else if (day.windSpeedMax < 30) {
+      score += 5; // Moderate wind
+    }
+
+    // Sunshine duration (minor positive): +1 point per hour
+    const sunrise = new Date(day.sunrise);
+    const sunset = new Date(day.sunset);
+    const daylightHours = (sunset.getTime() - sunrise.getTime()) / (1000 * 60 * 60);
+    score += Math.min(daylightHours, 16); // Cap at 16 hours
+
+    return Math.round(score);
+  };
+
+  // Find the best day from forecast
+  const findBestDayIndex = (forecast: DailyForecast[]): number => {
+    let bestIndex = 0;
+    let bestScore = -1;
+
+    forecast.forEach((day, index) => {
+      const score = calculateWeatherScore(day);
+      if (score > bestScore) {
+        bestScore = score;
+        bestIndex = index;
+      }
+    });
+
+    return bestIndex;
+  };
+
   // Seeded random generator for consistent but unique per-card randomness
   const seededRandom = (seed: number) => {
     const x = Math.sin(seed) * 10000;
@@ -229,6 +285,10 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
   );
   const locationDisplay = matchingFavorite?.name || `(${location.lat}, ${location.lon})`;
 
+  // Calculate best day from first 8 days of forecast
+  const forecastDays = dailyForecast.slice(0, 8);
+  const bestDayIndex = findBestDayIndex(forecastDays);
+
   return (
     <div className="weather-container">
       {/* Today Section*/}
@@ -276,37 +336,42 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
         <p className="updated">Updated: {new Date(todayWeather.time).toLocaleTimeString()}</p>
       </div>
 
-      {/* Next 7 Days Section*/}
+      {/* Next 8 Days Section*/}
       <div className="forecast-section">
         <div className="forecast-list">
-          {dailyForecast.slice(0, 7).map((day, index) => (
-            <div key={index} className={`forecast-card ${animationsEnabled ? getWeatherClass(day.weatherCode) : ''}`}>
-              {renderParticles(day.weatherCode, false, index + 2)}
-              <h3>{new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</h3>
-              <p className="weather-icon-container">{getWeatherIcon(day.weatherCode)}</p>
-              <p><strong>Conditions:</strong> {weatherDescription(day.weatherCode)}</p>
-              <p><strong>High:</strong> <span className="value">{convertTemp(day.tempMax).toFixed(1)}°{tempUnit}</span></p>
-              <p><strong>Low:</strong> <span className="value">{convertTemp(day.tempMin).toFixed(1)}°{tempUnit}</span></p>
-              <p><strong>Precipitation:</strong> <span className="value">{day.precipitationSum} mm</span></p>
-               <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
-               <div className="sun-moon-info">
-                 <div className="sun-pair">
-                   <div className="sun-time-item">
-                     <span className="sun-moon-icon">🌅</span>
-                     <span className="sun-moon-text">{new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                   </div>
-                   <div className="sun-time-item">
-                     <span className="sun-moon-icon">🌇</span>
-                     <span className="sun-moon-text">{new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                   </div>
-                 </div>
-                 <div className="moon-item">
-                   <span className="sun-moon-icon">🌙</span>
-                   <span className="sun-moon-text">{getMoonPhaseName(day.moonPhase)} ({day.moonIllumination}%)</span>
-                 </div>
-               </div>
-            </div>
-          ))}
+          {forecastDays.map((day, index) => {
+            const score = calculateWeatherScore(day);
+            const isBestDay = index === bestDayIndex;
+            return (
+              <div key={index} className={`forecast-card ${animationsEnabled ? getWeatherClass(day.weatherCode) : ''} ${isBestDay ? 'best-day' : ''}`}>
+                {renderParticles(day.weatherCode, false, index + 2)}
+                <h3>{new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</h3>
+                <p className="weather-icon-container">{getWeatherIcon(day.weatherCode)}</p>
+                <p><strong>Conditions:</strong> {weatherDescription(day.weatherCode)} {isBestDay && <span className="best-day-badge">★ BEST</span>}</p>
+                <p className="weather-score">Score: {score}/100</p>
+                <p><strong>High:</strong> <span className="value">{convertTemp(day.tempMax).toFixed(1)}°{tempUnit}</span></p>
+                <p><strong>Low:</strong> <span className="value">{convertTemp(day.tempMin).toFixed(1)}°{tempUnit}</span></p>
+                <p><strong>Precipitation:</strong> <span className="value">{day.precipitationSum} mm</span></p>
+                <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
+                <div className="sun-moon-info">
+                  <div className="sun-pair">
+                    <div className="sun-time-item">
+                      <span className="sun-moon-icon">🌅</span>
+                      <span className="sun-moon-text">{new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                    </div>
+                    <div className="sun-time-item">
+                      <span className="sun-moon-icon">🌇</span>
+                      <span className="sun-moon-text">{new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                    </div>
+                  </div>
+                  <div className="moon-item">
+                    <span className="sun-moon-icon">🌙</span>
+                    <span className="sun-moon-text">{getMoonPhaseName(day.moonPhase)} ({day.moonIllumination}%)</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
