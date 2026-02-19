@@ -190,6 +190,7 @@
   align-items: center;
   text-align: center;
   gap: var(--space-xs);
+  min-width: 80px;
 }
 
 .sun-moon-icon {
@@ -199,14 +200,16 @@
 
 .sun-moon-text {
   font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  color: #ffffff;
+  font-family: var(--font-mono);
   line-height: 1.3;
+  white-space: nowrap;
 }
 
 .sun-moon-info {
   grid-column: 1 / -1;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--space-md);
   justify-content: center;
   position: relative;
@@ -218,7 +221,8 @@
 }
 
 .sun-moon-info .sun-time-item {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
+  min-width: 70px;
 }
 
 .sun-moon-info .sun-moon-icon {
@@ -227,6 +231,9 @@
 
 .sun-moon-info .sun-moon-text {
   font-size: var(--text-xs);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  white-space: nowrap;
 }
 
 .updated {
