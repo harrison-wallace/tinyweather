@@ -347,7 +347,7 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
                 {renderParticles(day.weatherCode, false, index + 2)}
                 <h3>{new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</h3>
                 <p className="weather-icon-container">{getWeatherIcon(day.weatherCode)}</p>
-                <p><strong>Conditions:</strong> {weatherDescription(day.weatherCode)} {isBestDay && <span className="best-day-badge">★ BEST</span>}</p>
+                <p><strong>Conditions:</strong> {weatherDescription(day.weatherCode)}</p>
                 <p className="weather-score">Score: {score}/100</p>
                 <p><strong>High:</strong> <span className="value">{convertTemp(day.tempMax).toFixed(1)}°{tempUnit}</span></p>
                 <p><strong>Low:</strong> <span className="value">{convertTemp(day.tempMin).toFixed(1)}°{tempUnit}</span></p>
