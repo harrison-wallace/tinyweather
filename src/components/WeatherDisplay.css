@@ -219,6 +219,13 @@
   line-height: 1;
 }
 
+.sun-moon-icon-wi {
+  display: block;
+  font-size: var(--text-lg);
+  line-height: 1;
+  color: #ffffff;
+}
+
 .sun-moon-text {
   font-size: var(--text-xs);
   color: #ffffff;

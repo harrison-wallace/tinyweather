@@ -1,7 +1,28 @@
-import { WiDaySunny, WiCloudy, WiRain, WiFog, WiSnow, WiNa } from 'react-icons/wi';
+import {
+  WiDaySunny, WiCloudy, WiRain, WiFog, WiSnow, WiNa,
+  WiMoonNew, WiMoonWaxingCrescent1, WiMoonFirstQuarter, WiMoonWaxingGibbous1,
+  WiMoonFull, WiMoonWaningGibbous1, WiMoonThirdQuarter, WiMoonWaningCrescent1,
+} from 'react-icons/wi';
 import './WeatherDisplay.css';
 import React from 'react';
-import { getMoonPhaseName } from '../services/moonPhaseService';
+import { getMoonPhaseName, getMoonIconName } from '../services/moonPhaseService';
+
+const MOON_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  WiMoonNew,
+  WiMoonWaxingCrescent1,
+  WiMoonFirstQuarter,
+  WiMoonWaxingGibbous1,
+  WiMoonFull,
+  WiMoonWaningGibbous1,
+  WiMoonThirdQuarter,
+  WiMoonWaningCrescent1,
+};
+
+function MoonIcon({ phase, size = 24 }: { phase: number; size?: number }) {
+  const iconName = getMoonIconName(phase);
+  const Icon = MOON_ICON_MAP[iconName] ?? WiMoonNew;
+  return <Icon size={size} className="sun-moon-icon-wi" />;
+}
 
 interface TodayWeather {
   temperature: number;
@@ -47,17 +68,19 @@ interface WeatherDisplayProps {
   dailyForecast: DailyForecast[];
   location: Location | null;
   tempUnit: 'C' | 'F';
+  windUnit: 'kmh' | 'mph';
   favorites: FavoriteLocation[];
   animationsEnabled: boolean;
 }
 
-export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit, favorites, animationsEnabled }: WeatherDisplayProps) => {
+export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit, windUnit, favorites, animationsEnabled }: WeatherDisplayProps) => {
   if (!todayWeather || !location || !dailyForecast.length) {
     return <p>No weather data available. Set a location to get started.</p>;
   }
 
   const convertTemp = (celsius: number) => tempUnit === 'F' ? (celsius * 9) / 5 + 32 : celsius;
-  const convertWindSpeed = (kmh: number) => tempUnit === 'F' ? kmh / 1.609344 : kmh;
+  const convertWindSpeed = (kmh: number) => windUnit === 'mph' ? kmh / 1.609344 : kmh;
+  const windUnitLabel = windUnit === 'mph' ? 'mph' : 'km/h';
   const convertVisibility = (meters: number) => tempUnit === 'F' ? meters / 1609.344 : meters / 1000;
 
   const weatherDescription = (code: number) => {
@@ -314,7 +337,7 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
         <div className="key-metrics">
           <p><strong>High:</strong> <span className="value">{convertTemp(dailyForecast[0].tempMax).toFixed(0)}°{tempUnit}</span></p>
           <p><strong>Low:</strong> <span className="value">{convertTemp(dailyForecast[0].tempMin).toFixed(0)}°{tempUnit}</span></p>
-          <p><strong>Wind:</strong> <span className="value">{windDirectionText(todayWeather.windDirection)} {convertWindSpeed(todayWeather.windSpeed).toFixed(0)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
+          <p><strong>Wind:</strong> <span className="value">{windDirectionText(todayWeather.windDirection)} {convertWindSpeed(todayWeather.windSpeed).toFixed(0)} {windUnitLabel}</span></p>
         </div>
         <div className="additional-metrics">
           <p><strong>Precipitation:</strong> <span className="value">{todayWeather.precipitation}mm</span></p>
@@ -336,7 +359,7 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
               </div>
             </div>
             <div className="moon-item">
-              <span className="sun-moon-icon">🌙</span>
+              <MoonIcon phase={dailyForecast[0].moonPhase} size={22} />
               <span className="sun-moon-text">{getMoonPhaseName(dailyForecast[0].moonPhase)} ({dailyForecast[0].moonIllumination}%)</span>
             </div>
           </div>
@@ -360,7 +383,7 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
                 <p><strong>High:</strong> <span className="value">{convertTemp(day.tempMax).toFixed(1)}°{tempUnit}</span></p>
                 <p><strong>Low:</strong> <span className="value">{convertTemp(day.tempMin).toFixed(1)}°{tempUnit}</span></p>
                 <p><strong>Precipitation:</strong> <span className="value">{day.precipitationSum} mm</span></p>
-                <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {tempUnit === 'F' ? 'mph' : 'km/h'}</span></p>
+                <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {windUnitLabel}</span></p>
                 <div className="sun-moon-info">
                   <div className="sun-pair">
                     <div className="sun-time-item">
@@ -373,7 +396,7 @@ export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit
                     </div>
                   </div>
                   <div className="moon-item">
-                    <span className="sun-moon-icon">🌙</span>
+                    <MoonIcon phase={day.moonPhase} size={22} />
                     <span className="sun-moon-text">{getMoonPhaseName(day.moonPhase)} ({day.moonIllumination}%)</span>
                   </div>
                 </div>

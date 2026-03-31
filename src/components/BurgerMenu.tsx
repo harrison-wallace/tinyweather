@@ -7,6 +7,8 @@ interface BurgerMenuProps {
   onLocationSubmit: (lat: number, lon: number) => void;
   tempUnit: 'C' | 'F';
   setTempUnit: (unit: 'C' | 'F') => void;
+  windUnit: 'kmh' | 'mph';
+  setWindUnit: (unit: 'kmh' | 'mph') => void;
   textSize: 'small' | 'medium' | 'large';
   setTextSize: (size: 'small' | 'medium' | 'large') => void;
   animationsEnabled: boolean;
@@ -29,6 +31,8 @@ export const BurgerMenu = ({
   onLocationSubmit,
   tempUnit,
   setTempUnit,
+  windUnit,
+  setWindUnit,
   textSize,
   setTextSize,
   animationsEnabled,
@@ -295,6 +299,28 @@ export const BurgerMenu = ({
                   onChange={() => setTempUnit('F')}
                 />
                 Fahrenheit
+              </label>
+            </div>
+
+            <h3>💨 Wind Speed Unit</h3>
+            <div style={{ display: 'flex', gap: '1em' }}>
+              <label>
+                <input
+                  type="radio"
+                  value="mph"
+                  checked={windUnit === 'mph'}
+                  onChange={() => setWindUnit('mph')}
+                />
+                mph
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  value="kmh"
+                  checked={windUnit === 'kmh'}
+                  onChange={() => setWindUnit('kmh')}
+                />
+                km/h
               </label>
             </div>
 

@@ -53,6 +53,10 @@ function App() {
   const [todayWeather, setTodayWeather] = useState<TodayWeather | null>(null);
   const [dailyForecast, setDailyForecast] = useState<DailyForecast[]>([]);
   const [tempUnit, setTempUnit] = useState<'C' | 'F'>('C');
+  const [windUnit, setWindUnit] = useState<'kmh' | 'mph'>(() => {
+    const saved = localStorage.getItem('windUnit');
+    return (saved as 'kmh' | 'mph') || 'mph';
+  });
   const [textSize, setTextSize] = useState<'small' | 'medium' | 'large'>(() => {
     const savedTextSize = localStorage.getItem('textSize');
     return (savedTextSize as 'small' | 'medium' | 'large') || 'medium';
@@ -66,6 +70,10 @@ function App() {
     const savedFavorites = localStorage.getItem('favoriteLocations');
     return savedFavorites ? JSON.parse(savedFavorites) : [];
   });
+
+  useEffect(() => {
+    localStorage.setItem('windUnit', windUnit);
+  }, [windUnit]);
 
   useEffect(() => {
     localStorage.setItem('favoriteLocations', JSON.stringify(favorites));
@@ -189,6 +197,8 @@ function App() {
             onLocationSubmit={handleLocationSubmit}
             tempUnit={tempUnit}
             setTempUnit={setTempUnit}
+            windUnit={windUnit}
+            setWindUnit={setWindUnit}
             textSize={textSize}
             setTextSize={setTextSize}
             animationsEnabled={animationsEnabled}
@@ -205,6 +215,7 @@ function App() {
             dailyForecast={dailyForecast}
             location={location}
             tempUnit={tempUnit}
+            windUnit={windUnit}
             favorites={favorites}
             animationsEnabled={animationsEnabled}
           />

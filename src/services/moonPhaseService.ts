@@ -56,18 +56,22 @@ export function getMoonPhaseName(phase: number): string {
 }
 
 /**
- * Get moon icon class name for react-icons
+ * Get moon icon name for react-icons/wi
+ * Phase 0–1 where 0/1 = New Moon, 0.25 = First Quarter, 0.5 = Full Moon, 0.75 = Last Quarter
  */
 export function getMoonIconName(phase: number): string {
-  const normalizedPhase = (phase % 1 + 1) % 1;
-  
-  // Map to 8 basic moon phases for icons
-  if (normalizedPhase < 0.0625 || normalizedPhase >= 0.9375) return 'WiMoonNew';
-  if (normalizedPhase < 0.1875) return 'WiMoonWaningCrescent3';
-  if (normalizedPhase < 0.3125) return 'WiMoonFirstQuarter';
-  if (normalizedPhase < 0.4375) return 'WiMoonWaxingGibbous1';
-  if (normalizedPhase < 0.5625) return 'WiMoonFull';
-  if (normalizedPhase < 0.6875) return 'WiMoonWaningGibbous2';
-  if (normalizedPhase < 0.8125) return 'WiMoonLastQuarter';
-  return 'WiMoonWaxingCrescent1';
+  const p = (phase % 1 + 1) % 1;
+
+  // 0 → New Moon
+  // 0→0.5 → Waxing (getting brighter): Crescent → First Quarter → Gibbous
+  // 0.5 → Full Moon
+  // 0.5→1 → Waning (getting dimmer): Gibbous → Last Quarter → Crescent
+  if (p < 0.0625 || p >= 0.9375) return 'WiMoonNew';
+  if (p < 0.1875) return 'WiMoonWaxingCrescent1';
+  if (p < 0.3125) return 'WiMoonFirstQuarter';
+  if (p < 0.4375) return 'WiMoonWaxingGibbous1';
+  if (p < 0.5625) return 'WiMoonFull';
+  if (p < 0.6875) return 'WiMoonWaningGibbous1';
+  if (p < 0.8125) return 'WiMoonThirdQuarter';
+  return 'WiMoonWaningCrescent1';
 }
