@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { BurgerMenu } from './components/BurgerMenu';
 import { WeatherDisplay } from './components/WeatherDisplay';
@@ -35,8 +35,8 @@ export interface TodayWeather {
 }
 
 export interface HourForecast {
-  time: string;          // ISO local "YYYY-MM-DDTHH:MM"
-  hourLabel: string;     // "HH:MM"
+  time: string;
+  hourLabel: string;
   temperature: number;
   weatherCode: number;
   precipProbability: number;
@@ -59,34 +59,40 @@ export interface DailyForecast {
 }
 
 const HOURS_TO_SHOW = 18;
+const REFRESH_INTERVAL_MS = 60 * 60 * 1000;
+
+/** Safely read JSON from localStorage. Returns fallback on parse error or missing key. */
+function readLS<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    console.warn(`Corrupt localStorage value for "${key}", resetting.`);
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
+
+function readLSString<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
+  const raw = localStorage.getItem(key);
+  return (raw && (allowed as readonly string[]).includes(raw)) ? (raw as T) : fallback;
+}
 
 function App() {
-  const [location, setLocation] = useState<Location | null>(() => {
-    const savedActive = localStorage.getItem('activeLocation');
-    return savedActive ? JSON.parse(savedActive) : null;
-  });
-  const [todayWeather, setTodayWeather] = useState<TodayWeather | null>(null);
-  const [hourlyForecast, setHourlyForecast] = useState<HourForecast[]>([]);
-  const [dailyForecast, setDailyForecast] = useState<DailyForecast[]>([]);
-  const [tempUnit, setTempUnit] = useState<'C' | 'F'>('C');
-  const [windUnit, setWindUnit] = useState<'kmh' | 'mph'>(() => {
-    const saved = localStorage.getItem('windUnit');
-    return (saved as 'kmh' | 'mph') || 'mph';
-  });
-  const [textSize, setTextSize] = useState<'small' | 'medium' | 'large'>(() => {
-    const savedTextSize = localStorage.getItem('textSize');
-    return (savedTextSize as 'small' | 'medium' | 'large') || 'medium';
-  });
-  const [animationsEnabled, setAnimationsEnabled] = useState<boolean>(() => {
-    const savedAnimations = localStorage.getItem('animationsEnabled');
-    return savedAnimations !== null ? JSON.parse(savedAnimations) : true;
-  });
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [favorites, setFavorites] = useState<FavoriteLocation[]>(() => {
-    const savedFavorites = localStorage.getItem('favoriteLocations');
-    return savedFavorites ? JSON.parse(savedFavorites) : [];
-  });
+  const [location, setLocation]                   = useState<Location | null>(() => readLS<Location | null>('activeLocation', null));
+  const [todayWeather, setTodayWeather]           = useState<TodayWeather | null>(null);
+  const [hourlyForecast, setHourlyForecast]       = useState<HourForecast[]>([]);
+  const [dailyForecast, setDailyForecast]         = useState<DailyForecast[]>([]);
+  const [tempUnit, setTempUnit]                   = useState<'C' | 'F'>(() => readLSString('tempUnit', ['C', 'F'] as const, 'C'));
+  const [windUnit, setWindUnit]                   = useState<'kmh' | 'mph'>(() => readLSString('windUnit', ['kmh', 'mph'] as const, 'mph'));
+  const [textSize, setTextSize]                   = useState<'small' | 'medium' | 'large'>(() => readLSString('textSize', ['small', 'medium', 'large'] as const, 'medium'));
+  const [animationsEnabled, setAnimationsEnabled] = useState<boolean>(() => readLS<boolean>('animationsEnabled', true));
+  const [isDrawerOpen, setIsDrawerOpen]           = useState(false);
+  const [favorites, setFavorites]                 = useState<FavoriteLocation[]>(() => readLS<FavoriteLocation[]>('favoriteLocations', []));
 
+  // Persist settings.
+  useEffect(() => { localStorage.setItem('tempUnit', tempUnit); }, [tempUnit]);
   useEffect(() => { localStorage.setItem('windUnit', windUnit); }, [windUnit]);
   useEffect(() => { localStorage.setItem('favoriteLocations', JSON.stringify(favorites)); }, [favorites]);
   useEffect(() => { localStorage.setItem('textSize', textSize); }, [textSize]);
@@ -96,7 +102,14 @@ function App() {
     else          localStorage.removeItem('activeLocation');
   }, [location]);
 
+  // Track in-flight request to cancel stale fetches when location changes rapidly.
+  const inflightRef = useRef<AbortController | null>(null);
+
   const fetchWeather = useCallback(async (lat: number, lon: number) => {
+    inflightRef.current?.abort();
+    const ctrl = new AbortController();
+    inflightRef.current = ctrl;
+
     try {
       const url =
         `https://api.open-meteo.com/v1/forecast` +
@@ -107,12 +120,14 @@ function App() {
         `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset,` +
         `windspeed_10m_max,weathercode` +
         `&forecast_days=8&timezone=auto`;
-      const response = await axios.get(url);
+      const response = await axios.get(url, { signal: ctrl.signal });
       const hourly = response.data.hourly;
       const daily  = response.data.daily;
 
-      // Find hourly index for "now" — matches vortexhome's strategy.
       const hourlyTimes: string[] = hourly?.time ?? [];
+      if (!hourlyTimes.length) throw new Error('Empty hourly data');
+
+      // Find index of the current hour (largest i where time <= now).
       const nowMs = Date.now();
       let startIdx = 0;
       for (let i = 0; i < hourlyTimes.length; i++) {
@@ -128,7 +143,7 @@ function App() {
         precipitation:            hourly.precipitation[startIdx],
         rain:                     hourly.rain[startIdx],
         snowfall:                 hourly.snowfall[startIdx],
-        precipitationProbability: hourly.precipitation_probability[startIdx],
+        precipitationProbability: hourly.precipitation_probability?.[startIdx] ?? 0,
         windSpeed:                hourly.windspeed_10m[startIdx],
         windDirection:            hourly.winddirection_10m[startIdx],
         cloudCover:               hourly.cloudcover[startIdx],
@@ -140,8 +155,9 @@ function App() {
         updatedAt:                new Date(),
       });
 
+      const endIdx = Math.min(hourlyTimes.length, startIdx + HOURS_TO_SHOW);
       const hours: HourForecast[] = [];
-      for (let i = startIdx; i < Math.min(hourlyTimes.length, startIdx + HOURS_TO_SHOW); i++) {
+      for (let i = startIdx; i < endIdx; i++) {
         const time = hourlyTimes[i];
         hours.push({
           time,
@@ -158,7 +174,8 @@ function App() {
 
       setDailyForecast(
         (daily.time as string[]).map((date: string, index: number) => {
-          const dateObj = new Date(date);
+          // Use noon UTC to avoid DST/timezone edge cases when computing moon phase.
+          const dateObj = new Date(`${date}T12:00:00Z`);
           return {
             date,
             tempMax:          daily.temperature_2m_max[index],
@@ -174,10 +191,13 @@ function App() {
         })
       );
     } catch (error) {
+      if (axios.isCancel(error) || (error as Error).name === 'CanceledError') return;
       console.error('Error fetching weather:', error);
       setTodayWeather(null);
       setHourlyForecast([]);
       setDailyForecast([]);
+    } finally {
+      if (inflightRef.current === ctrl) inflightRef.current = null;
     }
   }, []);
 
@@ -186,7 +206,7 @@ function App() {
     fetchWeather(location.lat, location.lon);
     const intervalId = setInterval(() => {
       fetchWeather(location.lat, location.lon);
-    }, 60 * 60 * 1000);
+    }, REFRESH_INTERVAL_MS);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchWeather(location.lat, location.lon);
@@ -196,15 +216,22 @@ function App() {
     return () => {
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      inflightRef.current?.abort();
     };
   }, [location, fetchWeather]);
 
-  const handleLocationSubmit = (lat: number, lon: number) => setLocation({ lat, lon });
+  const handleLocationSubmit = (lat: number, lon: number) => {
+    // No-op if same coords (avoid pointless refetch).
+    if (location && location.lat === lat && location.lon === lon) {
+      setIsDrawerOpen(false);
+      return;
+    }
+    setLocation({ lat, lon });
+  };
 
   const addFavorite = (lat: number, lon: number, name?: string) => {
-    const newFavorite = { lat, lon, name };
     setFavorites((prev) =>
-      prev.some(f => f.lat === lat && f.lon === lon) ? prev : [...prev, newFavorite]
+      prev.some(f => f.lat === lat && f.lon === lon) ? prev : [...prev, { lat, lon, name }]
     );
   };
 
@@ -213,7 +240,7 @@ function App() {
   };
 
   const selectFavorite = (fav: FavoriteLocation) => {
-    setLocation({ lat: fav.lat, lon: fav.lon });
+    handleLocationSubmit(fav.lat, fav.lon);
     setIsDrawerOpen(false);
   };
 

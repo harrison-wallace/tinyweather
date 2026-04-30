@@ -6,6 +6,7 @@
 //  - temp / wind unit conversion (C/F, km/h / mph)
 //  - hourly forecast strip
 
+import { useMemo } from 'react';
 import type { TodayWeather, HourForecast, DailyForecast } from '../App';
 import {
   describeWeatherCode,
@@ -276,12 +277,12 @@ function calculateWeatherScore(day: DailyForecast): number {
   return Math.round(score);
 }
 
-function findBestDayIndex(forecast: DailyForecast[]): number {
+function findBestDayIndex(scores: number[], forecast: DailyForecast[]): number {
   let bestIndex = 0;
   let bestScore = -1;
-  let bestTemp = -999;
-  forecast.forEach((day, index) => {
-    const score = calculateWeatherScore(day);
+  let bestTemp = -Infinity;
+  scores.forEach((score, index) => {
+    const day = forecast[index];
     if (score > bestScore || (score === bestScore && day.tempMax > bestTemp)) {
       bestScore = score;
       bestTemp = day.tempMax;
@@ -305,6 +306,20 @@ export const WeatherDisplay = ({
   favorites,
   animationsEnabled,
 }: WeatherDisplayProps) => {
+  // ----- Memoized scoring (must run before any early return; React Hook rules) -----
+  const forecastDays = useMemo(
+    () => (dailyForecast ? dailyForecast.slice(0, FORECAST_DAYS) : []),
+    [dailyForecast],
+  );
+  const scores = useMemo(
+    () => forecastDays.map(calculateWeatherScore),
+    [forecastDays],
+  );
+  const bestDayIndex = useMemo(
+    () => (forecastDays.length ? findBestDayIndex(scores, forecastDays) : 0),
+    [scores, forecastDays],
+  );
+
   // ----- Empty / loading states -----
   if (!location) {
     return (
@@ -332,12 +347,12 @@ export const WeatherDisplay = ({
     );
   }
 
-  // ----- Conversions -----
-  const convertTemp = (c: number) => (tempUnit === 'F' ? (c * 9) / 5 + 32 : c);
-  const convertWindSpeed = (kmh: number) => (windUnit === 'mph' ? kmh / 1.609344 : kmh);
-  const windUnitLabel = windUnit === 'mph' ? 'mph' : 'km/h';
+  // ----- Conversions (stable per-render is fine; cheap) -----
+  const convertTemp       = (c: number) => (tempUnit === 'F' ? (c * 9) / 5 + 32 : c);
+  const convertWindSpeed  = (kmh: number) => (windUnit === 'mph' ? kmh / 1.609344 : kmh);
+  const windUnitLabel     = windUnit === 'mph' ? 'mph' : 'km/h';
   const convertVisibility = (m: number) => (tempUnit === 'F' ? m / 1609.344 : m / 1000);
-  const visUnitLabel = tempUnit === 'F' ? 'mi' : 'km';
+  const visUnitLabel      = tempUnit === 'F' ? 'mi' : 'km';
 
   // ----- Derived values -----
   const { label, emoji } = describeWeatherCode(todayWeather.weatherCode, todayWeather.isDay);
@@ -352,8 +367,6 @@ export const WeatherDisplay = ({
     minute: '2-digit',
   });
 
-  const forecastDays = dailyForecast.slice(0, FORECAST_DAYS);
-  const bestDayIndex = findBestDayIndex(forecastDays);
   const today = forecastDays[0];
 
   // Animation gating — if the user disabled animations, drop the *-fade-* classes.
@@ -449,7 +462,7 @@ export const WeatherDisplay = ({
               key={day.date}
               day={day}
               isBest={index === bestDayIndex}
-              score={calculateWeatherScore(day)}
+              score={scores[index]}
               convertTemp={convertTemp}
             />
           ))}

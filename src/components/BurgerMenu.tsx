@@ -1,5 +1,5 @@
 // src/components/BurgerMenu.tsx
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { searchLocations, formatLocationDisplay, GeocodingResult } from '../services/geocodingService';
 
 interface BurgerMenuProps {
@@ -28,6 +28,7 @@ interface FavoriteLocation {
 
 // ---------------------------------------------------------------------------
 // Reusable Tailwind class fragments
+// (Tailwind v4 only allows opacity multiples of 5: /5 /10 /15 /20 /25…)
 // ---------------------------------------------------------------------------
 const labelCaps  = 'block text-[11px] uppercase tracking-[0.18em] font-medium text-white/45 mb-1.5';
 const sectionH3  = 'mt-7 mb-2 text-[11px] uppercase tracking-[0.2em] font-medium text-white/55';
@@ -44,10 +45,12 @@ const btnPrimary =
   `${btnBase} bg-white/10 border-white/20 text-white hover:bg-white/15 hover:border-white/30 ` +
   'shadow-[0_4px_18px_-8px_rgba(0,0,0,0.6)]';
 const btnSecondary =
-  `${btnBase} bg-white/5 border-white/10 text-white/70 hover:bg-white/8 hover:text-white`;
+  `${btnBase} bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white`;
 const radioRow =
   'inline-flex items-center gap-2 cursor-pointer select-none px-3 py-2 rounded-lg ' +
-  'bg-white/[0.03] border border-white/8 hover:bg-white/[0.06] transition-colors text-sm';
+  'bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-sm';
+
+const SEARCH_DEBOUNCE_MS = 250;
 
 export const BurgerMenu = ({
   onLocationSubmit,
@@ -66,26 +69,62 @@ export const BurgerMenu = ({
   favorites,
   selectFavorite,
 }: BurgerMenuProps) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
+  const [searchQuery, setSearchQuery]         = useState('');
+  const [searchResults, setSearchResults]     = useState<GeocodingResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedResult, setSelectedResult] = useState<GeocodingResult | null>(null);
-  const [isSearchMode, setIsSearchMode] = useState(true);
+  const [selectedResult, setSelectedResult]   = useState<GeocodingResult | null>(null);
+  const [isSearchMode, setIsSearchMode]       = useState(true);
 
-  const [lat, setLat] = useState('');
-  const [lon, setLon] = useState('');
+  const [lat, setLat]   = useState('');
+  const [lon, setLon]   = useState('');
   const [name, setName] = useState('');
 
-  const handleSearchInput = async (value: string) => {
+  // Debounce + abort the geocoding lookup so we don't fire on every keystroke.
+  const debounceRef = useRef<number | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+
+  const handleSearchInput = (value: string) => {
     setSearchQuery(value);
-    if (value.trim().length >= 2) {
-      const results = await searchLocations(value);
-      setSearchResults(results);
-      setShowSuggestions(true);
-    } else {
+    setSelectedResult(null);
+
+    if (debounceRef.current !== null) window.clearTimeout(debounceRef.current);
+    searchAbortRef.current?.abort();
+
+    if (value.trim().length < 2) {
       setSearchResults([]);
       setShowSuggestions(false);
+      return;
     }
+
+    debounceRef.current = window.setTimeout(async () => {
+      const ctrl = new AbortController();
+      searchAbortRef.current = ctrl;
+      const results = await searchLocations(value, ctrl.signal);
+      if (ctrl.signal.aborted) return;
+      setSearchResults(results);
+      setShowSuggestions(true);
+    }, SEARCH_DEBOUNCE_MS);
+  };
+
+  // Close on Escape; cleanup pending search timers/aborts on unmount.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, setIsOpen]);
+
+  useEffect(() => () => {
+    if (debounceRef.current !== null) window.clearTimeout(debounceRef.current);
+    searchAbortRef.current?.abort();
+  }, []);
+
+  const switchMode = (toSearch: boolean) => {
+    setIsSearchMode(toSearch);
+    setSelectedResult(null);
+    setShowSuggestions(false);
   };
 
   const handleSelectSuggestion = (result: GeocodingResult) => {
@@ -118,7 +157,7 @@ export const BurgerMenu = ({
 
   const handleCoordinateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const latitude = parseFloat(lat);
+    const latitude  = parseFloat(lat);
     const longitude = parseFloat(lon);
     if (!isNaN(latitude) && !isNaN(longitude)) {
       onLocationSubmit(latitude, longitude);
@@ -130,7 +169,7 @@ export const BurgerMenu = ({
   };
 
   const handleAddCoordinateFavorite = () => {
-    const latitude = parseFloat(lat);
+    const latitude  = parseFloat(lat);
     const longitude = parseFloat(lon);
     if (!isNaN(latitude) && !isNaN(longitude)) {
       addFavorite(latitude, longitude, name || undefined);
@@ -148,7 +187,7 @@ export const BurgerMenu = ({
         onClick={() => setIsOpen(true)}
         aria-label="Open menu"
         className="fixed top-4 left-4 z-50 inline-flex items-center justify-center w-12 h-12 rounded-xl
-                   bg-white/8 hover:bg-white/14 active:bg-white/20
+                   bg-white/10 hover:bg-white/15 active:bg-white/20
                    border border-white/15 text-white text-xl
                    backdrop-blur-md transition-all
                    shadow-[0_4px_18px_-8px_rgba(0,0,0,0.6)]"
@@ -165,13 +204,14 @@ export const BurgerMenu = ({
           <aside
             className="absolute top-0 left-0 h-full w-[360px] max-w-[88vw]
                        bg-[#0c0c0c]/95 backdrop-blur-xl
-                       border-r border-white/8
+                       border-r border-white/10
                        shadow-[6px_0_28px_-4px_rgba(0,0,0,0.7)]
                        overflow-y-auto overscroll-contain
                        px-6 py-6 anim-fade-up"
             style={{ animationDuration: '0.28s' }}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
+            aria-modal="true"
             aria-label="Settings"
           >
             {/* Header */}
@@ -185,32 +225,32 @@ export const BurgerMenu = ({
                 onClick={() => setIsOpen(false)}
                 aria-label="Close menu"
                 className="w-9 h-9 rounded-lg flex items-center justify-center
-                           text-white/55 hover:text-white hover:bg-white/8 transition-colors"
+                           text-white/55 hover:text-white hover:bg-white/10 transition-colors"
               >
                 ✖
               </button>
             </div>
 
             {/* Mode toggle */}
-            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/8 mb-4">
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-white/5 border border-white/10 mb-4">
               <button
                 type="button"
-                onClick={() => setIsSearchMode(true)}
+                onClick={() => switchMode(true)}
                 className={`px-3 py-2 rounded-lg text-xs uppercase tracking-wider transition-colors ${
                   isSearchMode
-                    ? 'bg-white/14 text-white shadow-[0_0_12px_-4px_rgba(255,255,255,0.2)]'
-                    : 'text-white/55 hover:text-white hover:bg-white/6'
+                    ? 'bg-white/15 text-white shadow-[0_0_12px_-4px_rgba(255,255,255,0.2)]'
+                    : 'text-white/55 hover:text-white hover:bg-white/10'
                 }`}
               >
                 🔍 Search
               </button>
               <button
                 type="button"
-                onClick={() => setIsSearchMode(false)}
+                onClick={() => switchMode(false)}
                 className={`px-3 py-2 rounded-lg text-xs uppercase tracking-wider transition-colors ${
                   !isSearchMode
-                    ? 'bg-white/14 text-white shadow-[0_0_12px_-4px_rgba(255,255,255,0.2)]'
-                    : 'text-white/55 hover:text-white hover:bg-white/6'
+                    ? 'bg-white/15 text-white shadow-[0_0_12px_-4px_rgba(255,255,255,0.2)]'
+                    : 'text-white/55 hover:text-white hover:bg-white/10'
                 }`}
               >
                 📍 Coords
@@ -230,18 +270,18 @@ export const BurgerMenu = ({
                   />
                   {showSuggestions && searchResults.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-1 z-10
-                                    bg-[#0c0c0c]/98 backdrop-blur-xl
+                                    bg-[#0c0c0c]/95 backdrop-blur-xl
                                     border border-white/10 rounded-lg overflow-hidden
                                     max-h-72 overflow-y-auto
                                     shadow-[0_12px_32px_-8px_rgba(0,0,0,0.7)]">
-                      {searchResults.map((result, index) => (
+                      {searchResults.map((result) => (
                         <button
-                          key={index}
+                          key={`${result.latitude},${result.longitude}`}
                           type="button"
                           onClick={() => handleSelectSuggestion(result)}
                           className="w-full px-3 py-2.5 text-left
                                      border-b border-white/5 last:border-0
-                                     hover:bg-white/8 active:bg-white/12 transition-colors"
+                                     hover:bg-white/10 active:bg-white/15 transition-colors"
                         >
                           <div className="text-sm text-white font-medium">{result.name}</div>
                           <div className="text-xs text-white/45 tabular-nums">
@@ -253,7 +293,7 @@ export const BurgerMenu = ({
                   )}
                   {showSuggestions && searchResults.length === 0 && searchQuery.trim().length >= 2 && (
                     <div className="absolute top-full left-0 right-0 mt-1 z-10
-                                    bg-[#0c0c0c]/98 border border-white/10 rounded-lg
+                                    bg-[#0c0c0c]/95 border border-white/10 rounded-lg
                                     px-3 py-3 text-sm text-white/45 text-center">
                       No locations found
                     </div>
@@ -302,14 +342,14 @@ export const BurgerMenu = ({
             <h3 className={sectionH3}>⭐ Favorites</h3>
             {favorites.length > 0 ? (
               <ul className="flex flex-col gap-2">
-                {favorites.map((fav, index) => (
-                  <li key={index}
+                {favorites.map((fav) => (
+                  <li key={`${fav.lat},${fav.lon}`}
                       className="flex items-center gap-2 px-3 py-2 rounded-lg
-                                 bg-white/[0.03] border border-white/8 hover:bg-white/[0.06]
+                                 bg-white/5 border border-white/10 hover:bg-white/10
                                  transition-colors">
                     <button
                       type="button"
-                      onClick={() => { selectFavorite(fav); setIsOpen(false); }}
+                      onClick={() => selectFavorite(fav)}
                       className="flex-1 text-left text-sm text-white truncate hover:text-white"
                     >
                       {fav.name || `${fav.lat.toFixed(2)}, ${fav.lon.toFixed(2)}`}

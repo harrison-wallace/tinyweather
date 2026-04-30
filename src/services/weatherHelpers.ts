@@ -32,13 +32,19 @@ export function windDirectionLabel(deg: number): string {
 }
 
 export function formatDayLabel(isoDate: string): string {
-  const d = new Date(isoDate + 'T12:00:00');
-  const today = new Date();
+  // Compare in local-date space (Y-M-D), avoiding DST ambiguity from
+  // millisecond arithmetic on Date objects spanning a DST boundary.
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const target = new Date(y, m - 1, d, 12, 0, 0, 0);
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
-  if (d.toDateString() === today.toDateString())    return 'Today';
-  if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
-  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+  if (target.getTime() === today.getTime())    return 'Today';
+  if (target.getTime() === tomorrow.getTime()) return 'Tomorrow';
+  return target.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 export function ambientForWeather(code: number, isDay: boolean): AmbientTone {
