@@ -1,6 +1,5 @@
 // src/components/BurgerMenu.tsx
 import { useState } from 'react';
-import './BurgerMenu.css';
 import { searchLocations, formatLocationDisplay, GeocodingResult } from '../services/geocodingService';
 
 interface BurgerMenuProps {
@@ -27,6 +26,29 @@ interface FavoriteLocation {
   name?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Reusable Tailwind class fragments
+// ---------------------------------------------------------------------------
+const labelCaps  = 'block text-[11px] uppercase tracking-[0.18em] font-medium text-white/45 mb-1.5';
+const sectionH3  = 'mt-7 mb-2 text-[11px] uppercase tracking-[0.2em] font-medium text-white/55';
+const fieldInput =
+  'w-full bg-white/5 border border-white/10 rounded-lg text-white text-sm font-mono ' +
+  'px-3 py-2.5 transition-colors outline-none ' +
+  'focus:border-white/30 focus:bg-white/10 focus:ring-2 focus:ring-white/10 ' +
+  'placeholder:text-white/30';
+const btnBase =
+  'w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium ' +
+  'transition-all border min-h-[44px] uppercase tracking-wider ' +
+  'disabled:opacity-40 disabled:cursor-not-allowed';
+const btnPrimary =
+  `${btnBase} bg-white/10 border-white/20 text-white hover:bg-white/15 hover:border-white/30 ` +
+  'shadow-[0_4px_18px_-8px_rgba(0,0,0,0.6)]';
+const btnSecondary =
+  `${btnBase} bg-white/5 border-white/10 text-white/70 hover:bg-white/8 hover:text-white`;
+const radioRow =
+  'inline-flex items-center gap-2 cursor-pointer select-none px-3 py-2 rounded-lg ' +
+  'bg-white/[0.03] border border-white/8 hover:bg-white/[0.06] transition-colors text-sm';
+
 export const BurgerMenu = ({
   onLocationSubmit,
   tempUnit,
@@ -44,19 +66,16 @@ export const BurgerMenu = ({
   favorites,
   selectFavorite,
 }: BurgerMenuProps) => {
-  // Search by location state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedResult, setSelectedResult] = useState<GeocodingResult | null>(null);
   const [isSearchMode, setIsSearchMode] = useState(true);
 
-  // Coordinate input state
   const [lat, setLat] = useState('');
   const [lon, setLon] = useState('');
   const [name, setName] = useState('');
 
-  // Handle location search input
   const handleSearchInput = async (value: string) => {
     setSearchQuery(value);
     if (value.trim().length >= 2) {
@@ -69,14 +88,12 @@ export const BurgerMenu = ({
     }
   };
 
-  // Handle selecting a suggestion
   const handleSelectSuggestion = (result: GeocodingResult) => {
     setSelectedResult(result);
     setSearchQuery(formatLocationDisplay(result));
     setShowSuggestions(false);
   };
 
-  // Handle submitting location search
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedResult) {
@@ -90,7 +107,6 @@ export const BurgerMenu = ({
     }
   };
 
-  // Handle offering to save searched location to favorites
   const handleSaveSearchedLocation = () => {
     if (selectedResult) {
       addFavorite(selectedResult.latitude, selectedResult.longitude, selectedResult.name);
@@ -100,174 +116,211 @@ export const BurgerMenu = ({
     }
   };
 
-  // Handle coordinate submission
   const handleCoordinateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lon);
     if (!isNaN(latitude) && !isNaN(longitude)) {
       onLocationSubmit(latitude, longitude);
-      setLat('');
-      setLon('');
-      setName('');
+      setLat(''); setLon(''); setName('');
       setIsOpen(false);
     } else {
       alert('Please enter valid latitude and longitude values.');
     }
   };
 
-  // Handle adding coordinate to favorites
   const handleAddCoordinateFavorite = () => {
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lon);
     if (!isNaN(latitude) && !isNaN(longitude)) {
       addFavorite(latitude, longitude, name || undefined);
-      setLat('');
-      setLon('');
-      setName('');
+      setLat(''); setLon(''); setName('');
     } else {
       alert('Please enter valid latitude and longitude values.');
     }
   };
 
   return (
-    <div className="burger-menu">
+    <>
+      {/* Trigger button — fixed top-left */}
       <button
-        className="burger-button"
+        type="button"
         onClick={() => setIsOpen(true)}
+        aria-label="Open menu"
+        className="fixed top-4 left-4 z-50 inline-flex items-center justify-center w-12 h-12 rounded-xl
+                   bg-white/8 hover:bg-white/14 active:bg-white/20
+                   border border-white/15 text-white text-xl
+                   backdrop-blur-md transition-all
+                   shadow-[0_4px_18px_-8px_rgba(0,0,0,0.6)]"
       >
         ☰
       </button>
+
       {isOpen && (
-        <div className="burger-menu-overlay" onClick={() => setIsOpen(false)}>
-          <div className="burger-menu-drawer" onClick={(e) => e.stopPropagation()}>
-            <h1>TinyWeather</h1>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3>Location Search</h3>
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm anim-fade-in"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        >
+          <aside
+            className="absolute top-0 left-0 h-full w-[360px] max-w-[88vw]
+                       bg-[#0c0c0c]/95 backdrop-blur-xl
+                       border-r border-white/8
+                       shadow-[6px_0_28px_-4px_rgba(0,0,0,0.7)]
+                       overflow-y-auto overscroll-contain
+                       px-6 py-6 anim-fade-up"
+            style={{ animationDuration: '0.28s' }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Settings"
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h1 className="text-xl font-semibold text-gradient leading-tight">TinyWeather</h1>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/35 mt-1">Settings</p>
+              </div>
               <button
-                className="close-button"
+                type="button"
                 onClick={() => setIsOpen(false)}
+                aria-label="Close menu"
+                className="w-9 h-9 rounded-lg flex items-center justify-center
+                           text-white/55 hover:text-white hover:bg-white/8 transition-colors"
               >
                 ✖
               </button>
             </div>
 
             {/* Mode toggle */}
-            <div className="mode-toggle">
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/8 mb-4">
               <button
-                className={`toggle-btn ${isSearchMode ? 'active' : ''}`}
+                type="button"
                 onClick={() => setIsSearchMode(true)}
+                className={`px-3 py-2 rounded-lg text-xs uppercase tracking-wider transition-colors ${
+                  isSearchMode
+                    ? 'bg-white/14 text-white shadow-[0_0_12px_-4px_rgba(255,255,255,0.2)]'
+                    : 'text-white/55 hover:text-white hover:bg-white/6'
+                }`}
               >
-                🔍 Search by Location
+                🔍 Search
               </button>
               <button
-                className={`toggle-btn ${!isSearchMode ? 'active' : ''}`}
+                type="button"
                 onClick={() => setIsSearchMode(false)}
+                className={`px-3 py-2 rounded-lg text-xs uppercase tracking-wider transition-colors ${
+                  !isSearchMode
+                    ? 'bg-white/14 text-white shadow-[0_0_12px_-4px_rgba(255,255,255,0.2)]'
+                    : 'text-white/55 hover:text-white hover:bg-white/6'
+                }`}
               >
-                📍 Enter Coordinates
+                📍 Coords
               </button>
             </div>
 
-            {/* Search by location form */}
+            {/* Search form */}
             {isSearchMode && (
-              <form onSubmit={handleSearchSubmit} className="search-form">
-                <div className="search-input-wrapper">
+              <form onSubmit={handleSearchSubmit} className="flex flex-col gap-3">
+                <div className="relative">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => handleSearchInput(e.target.value)}
                     placeholder="e.g., London, UK"
-                    className="search-input"
+                    className={fieldInput}
                   />
                   {showSuggestions && searchResults.length > 0 && (
-                    <div className="suggestions-dropdown">
+                    <div className="absolute top-full left-0 right-0 mt-1 z-10
+                                    bg-[#0c0c0c]/98 backdrop-blur-xl
+                                    border border-white/10 rounded-lg overflow-hidden
+                                    max-h-72 overflow-y-auto
+                                    shadow-[0_12px_32px_-8px_rgba(0,0,0,0.7)]">
                       {searchResults.map((result, index) => (
                         <button
                           key={index}
                           type="button"
-                          className="suggestion-item"
                           onClick={() => handleSelectSuggestion(result)}
+                          className="w-full px-3 py-2.5 text-left
+                                     border-b border-white/5 last:border-0
+                                     hover:bg-white/8 active:bg-white/12 transition-colors"
                         >
-                          <div className="suggestion-name">{result.name}</div>
-                          <div className="suggestion-country">{result.country}</div>
+                          <div className="text-sm text-white font-medium">{result.name}</div>
+                          <div className="text-xs text-white/45 tabular-nums">
+                            {result.admin1 ? `${result.admin1}, ` : ''}{result.country}
+                          </div>
                         </button>
                       ))}
                     </div>
                   )}
                   {showSuggestions && searchResults.length === 0 && searchQuery.trim().length >= 2 && (
-                    <div className="suggestions-dropdown">
-                      <div className="suggestion-no-results">No locations found</div>
+                    <div className="absolute top-full left-0 right-0 mt-1 z-10
+                                    bg-[#0c0c0c]/98 border border-white/10 rounded-lg
+                                    px-3 py-3 text-sm text-white/45 text-center">
+                      No locations found
                     </div>
                   )}
                 </div>
-                <button type="submit" disabled={!selectedResult}>
-                  Search Location
+                <button type="submit" disabled={!selectedResult} className={btnPrimary}>
+                  Set Location
                 </button>
                 {selectedResult && (
-                  <button type="button" onClick={handleSaveSearchedLocation} className="secondary-btn">
-                    ⭐ Add "{selectedResult.name}" to Favorites
+                  <button type="button" onClick={handleSaveSearchedLocation} className={btnSecondary}>
+                    ⭐ Add “{selectedResult.name}” to Favorites
                   </button>
                 )}
               </form>
             )}
 
-            {/* Coordinate input form */}
+            {/* Coordinate form */}
             {!isSearchMode && (
-              <form onSubmit={handleCoordinateSubmit} className="coordinate-form">
-                <label>
-                  Latitude:
-                  <input
-                    type="text"
-                    value={lat}
+              <form onSubmit={handleCoordinateSubmit} className="flex flex-col gap-3">
+                <div>
+                  <label htmlFor="bm-lat" className={labelCaps}>Latitude</label>
+                  <input id="bm-lat" type="text" value={lat}
                     onChange={(e) => setLat(e.target.value)}
-                    placeholder="e.g., 51.5074"
-                  />
-                </label>
-                <label>
-                  Longitude:
-                  <input
-                    type="text"
-                    value={lon}
+                    placeholder="e.g., 51.5074" className={fieldInput} />
+                </div>
+                <div>
+                  <label htmlFor="bm-lon" className={labelCaps}>Longitude</label>
+                  <input id="bm-lon" type="text" value={lon}
                     onChange={(e) => setLon(e.target.value)}
-                    placeholder="e.g., -0.1278"
-                  />
-                </label>
-                <label>
-                  Name (optional):
-                  <input
-                    type="text"
-                    value={name}
+                    placeholder="e.g., -0.1278" className={fieldInput} />
+                </div>
+                <div>
+                  <label htmlFor="bm-name" className={labelCaps}>Name (optional)</label>
+                  <input id="bm-name" type="text" value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g., London"
-                  />
-                </label>
-                <button type="submit">
-                  Set Location
-                </button>
-                <button type="button" onClick={handleAddCoordinateFavorite} className="secondary-btn">
-                  Add to Favorites
+                    placeholder="e.g., London" className={fieldInput} />
+                </div>
+                <button type="submit" className={btnPrimary}>Set Location</button>
+                <button type="button" onClick={handleAddCoordinateFavorite} className={btnSecondary}>
+                  ⭐ Add to Favorites
                 </button>
               </form>
             )}
 
-            <h3>⭐ Favorites</h3>
+            {/* Favorites */}
+            <h3 className={sectionH3}>⭐ Favorites</h3>
             {favorites.length > 0 ? (
-              <ul className="favorites-list">
+              <ul className="flex flex-col gap-2">
                 {favorites.map((fav, index) => (
-                  <li key={index}>
+                  <li key={index}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg
+                                 bg-white/[0.03] border border-white/8 hover:bg-white/[0.06]
+                                 transition-colors">
                     <button
-                      className="favorite-item"
-                      onClick={() => {
-                        selectFavorite(fav);
-                        setIsOpen(false);
-                      }}
+                      type="button"
+                      onClick={() => { selectFavorite(fav); setIsOpen(false); }}
+                      className="flex-1 text-left text-sm text-white truncate hover:text-white"
                     >
-                      {fav.name || `(${fav.lat}, ${fav.lon})`}
+                      {fav.name || `${fav.lat.toFixed(2)}, ${fav.lon.toFixed(2)}`}
                     </button>
                     <button
-                      className="remove-btn"
+                      type="button"
                       onClick={() => removeFavorite(fav.lat, fav.lon)}
                       title="Remove from favorites"
+                      aria-label={`Remove ${fav.name ?? 'favorite'}`}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg
+                                 text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
                     >
                       ✕
                     </button>
@@ -275,107 +328,70 @@ export const BurgerMenu = ({
                 ))}
               </ul>
             ) : (
-              <p className="no-favorites">No favorites yet</p>
+              <p className="text-white/35 text-sm italic text-center py-3">No favorites yet</p>
             )}
 
-            <hr className="divider" />
+            <hr className="my-6 border-white/10" />
 
-            <h3>⚙️ Temperature Unit</h3>
-            <div style={{ display: 'flex', gap: '1em' }}>
-              <label>
-                <input
-                  type="radio"
-                  value="C"
-                  checked={tempUnit === 'C'}
-                  onChange={() => setTempUnit('C')}
-                />
-                Celsius
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  value="F"
-                  checked={tempUnit === 'F'}
-                  onChange={() => setTempUnit('F')}
-                />
-                Fahrenheit
-              </label>
+            {/* Settings groups */}
+            <h3 className={sectionH3}>🌡️ Temperature</h3>
+            <div className="flex gap-2">
+              {(['C', 'F'] as const).map((u) => (
+                <label key={u} className={radioRow}>
+                  <input type="radio" name="temp" value={u}
+                    checked={tempUnit === u}
+                    onChange={() => setTempUnit(u)}
+                    className="accent-white/80" />
+                  {u === 'C' ? 'Celsius' : 'Fahrenheit'}
+                </label>
+              ))}
             </div>
 
-            <h3>💨 Wind Speed Unit</h3>
-            <div style={{ display: 'flex', gap: '1em' }}>
-              <label>
-                <input
-                  type="radio"
-                  value="mph"
-                  checked={windUnit === 'mph'}
-                  onChange={() => setWindUnit('mph')}
-                />
-                mph
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  value="kmh"
-                  checked={windUnit === 'kmh'}
-                  onChange={() => setWindUnit('kmh')}
-                />
-                km/h
-              </label>
+            <h3 className={sectionH3}>💨 Wind Speed</h3>
+            <div className="flex gap-2">
+              {(['mph', 'kmh'] as const).map((u) => (
+                <label key={u} className={radioRow}>
+                  <input type="radio" name="wind" value={u}
+                    checked={windUnit === u}
+                    onChange={() => setWindUnit(u)}
+                    className="accent-white/80" />
+                  {u === 'mph' ? 'mph' : 'km/h'}
+                </label>
+              ))}
             </div>
 
-            <h3>📏 Text Size</h3>
-            <div style={{ display: 'flex', gap: '1em', flexWrap: 'wrap' }}>
-              <label>
-                <input
-                  type="radio"
-                  value="small"
-                  checked={textSize === 'small'}
-                  onChange={() => setTextSize('small')}
-                />
-                Small
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  value="medium"
-                  checked={textSize === 'medium'}
-                  onChange={() => setTextSize('medium')}
-                />
-                Medium
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  value="large"
-                  checked={textSize === 'large'}
-                  onChange={() => setTextSize('large')}
-                />
-                Large
-              </label>
+            <h3 className={sectionH3}>📏 Text Size</h3>
+            <div className="flex gap-2 flex-wrap">
+              {(['small', 'medium', 'large'] as const).map((s) => (
+                <label key={s} className={radioRow}>
+                  <input type="radio" name="textsize" value={s}
+                    checked={textSize === s}
+                    onChange={() => setTextSize(s)}
+                    className="accent-white/80" />
+                  <span className="capitalize">{s}</span>
+                </label>
+              ))}
             </div>
 
-            <h3>✨ Weather Animations</h3>
-            <div style={{ display: 'flex', gap: '1em' }}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={animationsEnabled}
-                  onChange={(e) => setAnimationsEnabled(e.target.checked)}
-                />
-                Enable weather animations
-              </label>
-            </div>
+            <h3 className={sectionH3}>✨ Animations</h3>
+            <label className={radioRow + ' w-full'}>
+              <input type="checkbox"
+                checked={animationsEnabled}
+                onChange={(e) => setAnimationsEnabled(e.target.checked)}
+                className="accent-white/80" />
+              Enable subtle fade-in animations
+            </label>
 
             <button
-              className="close-btn-bottom"
+              type="button"
               onClick={() => setIsOpen(false)}
+              className={btnSecondary + ' mt-6'}
             >
               Close
             </button>
-          </div>
+          </aside>
         </div>
       )}
-    </div>
+    </>
   );
 };

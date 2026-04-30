@@ -1,51 +1,7 @@
-/* src/App.css */
+/* src/App.css — minimal layout shell. All visual styling lives in index.css + Tailwind. */
+
 .app {
+  width: 100%;
   min-height: 100vh;
-  background: 
-    radial-gradient(ellipse at top, rgba(40, 40, 40, 0.3), transparent 50%),
-    radial-gradient(ellipse at bottom, rgba(20, 20, 20, 0.5), transparent 50%),
-    linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
   position: relative;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  flex: 1 0 auto;
-  width: 100%;
-}
-
-.content {
-  margin: 0 auto;
-  text-align: center;
-  flex: 1 0 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  width: 100%;
-}
-
-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 1em;
-  position: relative;
-  width: 100%;
-}
-
-main {
-  flex: 1 1 auto;
-  display: flex;
-  justify-content: stretch;
-  width: 100%;
-  max-width: none;
-  position: relative;
-}
-
-/* Position the BurgerMenu in the top-left corner */
-.burger-menu {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  z-index: 1000;
-  background: transparent;
 }

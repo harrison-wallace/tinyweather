@@ -1,209 +1,249 @@
-/* src/index.css */
+/* src/index.css — vortexhome-inspired design system + Tailwind v4 */
 
-/* Font Face Declarations */
-@font-face {
-  font-family: '0xProto Nerd Font';
-  src: url('/fonts/0xProtoNerdFontMono-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: '0xProto Nerd Font';
-  src: url('/fonts/0xProtoNerdFontMono-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
 
 :root {
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  --glass-blur: blur(10px);
-  
-  /* Monochrome Palette */
-  --color-bg-primary: #0a0a0a;
-  --color-bg-secondary: #1a1a1a;
-  --color-surface: rgba(30, 30, 30, 0.8);
-  --color-text-primary: rgba(255, 255, 255, 0.95);
-  --color-text-secondary: rgba(255, 255, 255, 0.7);
-  --color-text-tertiary: rgba(255, 255, 255, 0.5);
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-accent: rgba(255, 255, 255, 0.15);
-  
-  /* Typography */
-  --font-primary: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "0xProto Nerd Font", "Courier New", monospace;
-  
-  /* Font Sizes (Fluid Typography) */
-  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-  --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
-  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-  --text-lg: clamp(1.125rem, 1rem + 0.5vw, 1.5rem);
-  --text-xl: clamp(1.5rem, 1.2rem + 1vw, 2rem);
-  --text-2xl: clamp(2rem, 1.5rem + 2vw, 3rem);
-  --text-3xl: clamp(3rem, 2rem + 4vw, 5rem);
-  
-  /* Spacing */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 3rem;
-  
-  /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
-  
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --bg: #0a0a0a;
+  --accent: #7c3aed;
+  --accent-glow: rgba(124, 58, 237, 0.35);
 
-  /* Base Settings */
-  font-family: var(--font-primary);
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-primary);
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Monaco, Consolas, monospace;
 }
 
-/* Text Size Modifiers */
-.text-size-small {
-  --text-xs: clamp(0.625rem, 0.6rem + 0.2vw, 0.75rem);
-  --text-sm: clamp(0.75rem, 0.7rem + 0.3vw, 0.875rem);
-  --text-base: clamp(0.875rem, 0.825rem + 0.2vw, 1rem);
-  --text-lg: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
-  --text-xl: clamp(1.25rem, 1rem + 0.8vw, 1.75rem);
-  --text-2xl: clamp(1.75rem, 1.25rem + 1.5vw, 2.5rem);
-  --text-3xl: clamp(2.5rem, 1.75rem + 3vw, 4rem);
-}
-
-.text-size-medium {
-  /* Default values - already set in :root */
-}
-
-.text-size-large {
-  --text-xs: clamp(0.875rem, 0.8rem + 0.3vw, 1rem);
-  --text-sm: clamp(1rem, 0.9rem + 0.4vw, 1.125rem);
-  --text-base: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
-  --text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.75rem);
-  --text-xl: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem);
-  --text-2xl: clamp(2.25rem, 1.75rem + 2.5vw, 3.5rem);
-  --text-3xl: clamp(3.5rem, 2.25rem + 5vw, 6rem);
-}
-
-html, body {
-  height: 100%;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  background-color: var(--color-bg-primary);
 }
 
+html,
+body,
 #root {
+  width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
+  background-color: var(--bg);
+  color: white;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
 }
 
 body {
-  margin: 0;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 320px;
+  overflow-x: hidden;
 }
 
-a {
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  text-decoration: inherit;
-  transition: color var(--transition-fast);
+/* Tabular / mono numeric — opt-in via class */
+.tabular-nums,
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum', 'zero';
 }
 
-a:hover {
-  color: var(--color-text-primary);
+/* ---------------------------------------------------------------------------
+   Glass surfaces
+   --------------------------------------------------------------------------- */
+.widget {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.5rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.02),
+    0 20px 40px -20px rgba(0, 0, 0, 0.6),
+    0 8px 16px -8px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
 }
 
-h1 {
-  font-size: var(--text-2xl);
-  line-height: 1.1;
-  font-weight: 600;
+.widget::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
-h2 {
-  font-size: var(--text-xl);
-  line-height: 1.2;
-  font-weight: 600;
+.glass {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
-h3 {
-  font-size: var(--text-lg);
-  line-height: 1.3;
-  font-weight: 500;
+.glass-strong {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-button {
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: all var(--transition-base);
+/* ---------------------------------------------------------------------------
+   Ambient gradient backgrounds
+   --------------------------------------------------------------------------- */
+.ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
 
-button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+.ambient-violet {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%,   rgba(124, 58, 237, 0.18) 0%, transparent 75%),
+    radial-gradient(ellipse 100% 70% at 80% 100%, rgba(168, 85, 247, 0.10) 0%, transparent 75%);
 }
 
-button:active {
-  transform: translateY(0);
+.ambient-warm {
+  background:
+    radial-gradient(ellipse 110% 80% at 80% 10%, rgba(251, 146, 60, 0.20) 0%, transparent 75%),
+    radial-gradient(ellipse 100% 70% at 20% 90%, rgba(250, 204, 21, 0.10) 0%, transparent 75%);
 }
 
-button:focus,
-button:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.3);
-  outline-offset: 2px;
+.ambient-cool {
+  background:
+    radial-gradient(ellipse 110% 80% at 20% 10%, rgba(56, 189, 248, 0.18) 0%, transparent 75%),
+    radial-gradient(ellipse 100% 80% at 80% 90%, rgba(99, 102, 241, 0.12) 0%, transparent 75%);
 }
 
-/* Respect reduced motion preferences */
+.ambient-night {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%,   rgba(99, 102, 241, 0.20) 0%, transparent 75%),
+    radial-gradient(ellipse 100% 70% at 50% 100%, rgba(67, 56, 202, 0.14) 0%, transparent 75%);
+}
+
+.ambient-storm {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(71, 85, 105, 0.30) 0%, transparent 75%),
+    radial-gradient(ellipse 100% 70% at 30% 100%, rgba(30, 41, 59, 0.40) 0%, transparent 75%);
+}
+
+.ambient-snow {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(186, 230, 253, 0.18) 0%, transparent 75%),
+    radial-gradient(ellipse 100% 70% at 50% 100%, rgba(224, 242, 254, 0.10) 0%, transparent 75%);
+}
+
+.ambient-silver {
+  background:
+    radial-gradient(ellipse 110% 80% at 50% 10%, rgba(226, 232, 240, 0.14) 0%, transparent 75%),
+    radial-gradient(ellipse 100% 70% at 50% 100%, rgba(148, 163, 184, 0.10) 0%, transparent 75%);
+}
+
+/* ---------------------------------------------------------------------------
+   Gradient text & glow
+   --------------------------------------------------------------------------- */
+.text-gradient {
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.65) 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-warm {
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #ea580c 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+.glow-soft {
+  filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+}
+
+.glow-warm {
+  filter: drop-shadow(0 0 50px rgba(251, 146, 60, 0.30));
+}
+
+/* ---------------------------------------------------------------------------
+   Animations
+   --------------------------------------------------------------------------- */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+.anim-fade-up   { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-fade-in   { animation: fade-in 0.5s ease-out both; }
+.anim-scale-in  { animation: scale-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-pulse-glow{ animation: pulse-glow 2.5s ease-in-out infinite; }
+
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.12s; }
+.stagger > *:nth-child(3) { animation-delay: 0.19s; }
+.stagger > *:nth-child(4) { animation-delay: 0.26s; }
+.stagger > *:nth-child(5) { animation-delay: 0.33s; }
+.stagger > *:nth-child(6) { animation-delay: 0.40s; }
+.stagger > *:nth-child(7) { animation-delay: 0.47s; }
+.stagger > *:nth-child(8) { animation-delay: 0.54s; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0s !important;
   }
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* ---------------------------------------------------------------------------
+   Text size modifiers — affects fluid scale used by clamp() in tailwind classes
+   We scale with a CSS variable on root the few clamp()-bound elements use.
+   --------------------------------------------------------------------------- */
+.text-size-small  { --tw-scale: 0.875; }
+.text-size-medium { --tw-scale: 1; }
+.text-size-large  { --tw-scale: 1.15; }
+
+/* ---------------------------------------------------------------------------
+   Scrollbar (subtle)
+   --------------------------------------------------------------------------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
 }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }

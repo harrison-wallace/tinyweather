@@ -1,70 +1,33 @@
+// src/components/WeatherDisplay.tsx
+// Vortexhome-styled weather display, retaining tinyweather features:
+//  - 7-day forecast (configurable, currently 7)
+//  - per-day weather score + best-day highlight
+//  - moon phase + illumination
+//  - temp / wind unit conversion (C/F, km/h / mph)
+//  - hourly forecast strip
+
+import type { TodayWeather, HourForecast, DailyForecast } from '../App';
 import {
-  WiDaySunny, WiCloudy, WiRain, WiFog, WiSnow, WiNa,
-  WiMoonNew, WiMoonWaxingCrescent1, WiMoonFirstQuarter, WiMoonWaxingGibbous1,
-  WiMoonFull, WiMoonWaningGibbous1, WiMoonThirdQuarter, WiMoonWaningCrescent1,
-} from 'react-icons/wi';
-import './WeatherDisplay.css';
-import React from 'react';
-import { getMoonPhaseName, getMoonIconName } from '../services/moonPhaseService';
-
-const MOON_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  WiMoonNew,
-  WiMoonWaxingCrescent1,
-  WiMoonFirstQuarter,
-  WiMoonWaxingGibbous1,
-  WiMoonFull,
-  WiMoonWaningGibbous1,
-  WiMoonThirdQuarter,
-  WiMoonWaningCrescent1,
-};
-
-function MoonIcon({ phase, size = 24 }: { phase: number; size?: number }) {
-  const iconName = getMoonIconName(phase);
-  const Icon = MOON_ICON_MAP[iconName] ?? WiMoonNew;
-  return <Icon size={size} className="sun-moon-icon-wi" />;
-}
-
-interface TodayWeather {
-  temperature: number;
-  apparentTemperature: number;
-  dewpoint: number;
-  precipitation: number;
-  rain: number;
-  snowfall: number;
-  precipitationProbability: number;
-  windSpeed: number;
-  windDirection: number;
-  cloudCover: number;
-  visibility: number;
-  humidity: number;
-  weatherCode: number;
-  time: string;
-}
-
-interface DailyForecast {
-  date: string;
-  tempMax: number;
-  tempMin: number;
-  precipitationSum: number;
-  sunrise: string;
-  sunset: string;
-  windSpeedMax: number;
-  weatherCode: number;
-  moonPhase: number;
-  moonIllumination: number;
-}
+  describeWeatherCode,
+  windDirectionLabel,
+  formatDayLabel,
+  ambientForWeather,
+  getMoonEmoji,
+} from '../services/weatherHelpers';
+import { getMoonPhaseName } from '../services/moonPhaseService';
+import AmbientBackground from './AmbientBackground';
 
 interface Location {
   lat: number;
   lon: number;
 }
-
 interface FavoriteLocation extends Location {
   name?: string;
 }
 
 interface WeatherDisplayProps {
   todayWeather: TodayWeather | null;
+  hourlyForecast: HourForecast[];
   dailyForecast: DailyForecast[];
   location: Location | null;
   tempUnit: 'C' | 'F';
@@ -73,336 +36,423 @@ interface WeatherDisplayProps {
   animationsEnabled: boolean;
 }
 
-export const WeatherDisplay = ({ todayWeather, dailyForecast, location, tempUnit, windUnit, favorites, animationsEnabled }: WeatherDisplayProps) => {
-  if (!todayWeather || !location || !dailyForecast.length) {
-    return <p>No weather data available. Set a location to get started.</p>;
-  }
+const FORECAST_DAYS = 7;
 
-  const convertTemp = (celsius: number) => tempUnit === 'F' ? (celsius * 9) / 5 + 32 : celsius;
-  const convertWindSpeed = (kmh: number) => windUnit === 'mph' ? kmh / 1.609344 : kmh;
-  const windUnitLabel = windUnit === 'mph' ? 'mph' : 'km/h';
-  const convertVisibility = (meters: number) => tempUnit === 'F' ? meters / 1609.344 : meters / 1000;
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
-  const weatherDescription = (code: number) => {
-    switch (code) {
-      case 0: return 'Clear';
-      case 1: case 2: case 3: return 'Partly\n Cloudy';
-      case 45: case 48: return 'Fog';
-      case 61: case 63: case 65: return 'Rain';
-      case 71: case 73: case 75: return 'Snow';
-      default: return 'Unknown';
-    }
-  };
-  
-  const getWeatherIcon = (code: number, size: number = 40) => {
-    const icons: { [key: number]: React.ReactElement } = {
-      0: <WiDaySunny size={size} color="#ffffff" />,
-      1: <WiCloudy size={size} color="#ffffff" />,
-      2: <WiCloudy size={size} color="#ffffff" />,
-      3: <WiCloudy size={size} color="#ffffff" />,
-      45: <WiFog size={size} color="#ffffff" />,
-      48: <WiFog size={size} color="#ffffff" />,
-      61: <WiRain size={size} color="#ffffff" />,
-      63: <WiRain size={size} color="#ffffff" />,
-      65: <WiRain size={size} color="#ffffff" />,
-      71: <WiSnow size={size} color="#ffffff" />,
-      73: <WiSnow size={size} color="#ffffff" />,
-      75: <WiSnow size={size} color="#ffffff" />,
-    };
-  
-    return icons[code] || <WiNa size={size} color="#ffffff" />;
-  };
-
-  const windDirectionText = (degrees: number) => {
-    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-    const index = Math.round(degrees / 45) % 8;
-    return directions[index];
-  };
-
-  const getWeatherClass = (code: number): string => {
-    if (code === 0) return 'weather-clear';
-    if (code >= 1 && code <= 3) return 'weather-cloudy';
-    if (code === 45 || code === 48) return 'weather-fog';
-    if (code === 61 || code === 63 || code === 65) return 'weather-rain';
-    if (code === 71 || code === 73 || code === 75) return 'weather-snow';
-    return '';
-  };
-
-  // Calculate weather score for a day (0-100 scale)
-  const calculateWeatherScore = (day: DailyForecast): number => {
-    let score = 0;
-
-    // No rain (major positive): +50 points
-    if (day.precipitationSum === 0) {
-      score += 50;
-    }
-
-    // Clear skies (major positive): +40 points, Partly cloudy: +20 points
-    if (day.weatherCode === 0) {
-      score += 40;
-    } else if (day.weatherCode >= 1 && day.weatherCode <= 3) {
-      score += 20;
-    }
-
-    // Comfortable temperature 18-25°C (moderate positive): +30 points
-    const tempAvg = (day.tempMax + day.tempMin) / 2;
-    if (tempAvg >= 18 && tempAvg <= 25) {
-      score += 30;
-    } else if (tempAvg >= 15 && tempAvg <= 28) {
-      score += 15; // Somewhat comfortable
-    }
-
-    // Low wind (minor positive): +10 points
-    if (day.windSpeedMax < 20) {
-      score += 10;
-    } else if (day.windSpeedMax < 30) {
-      score += 5; // Moderate wind
-    }
-
-    // Sunshine duration (minor positive): +1 point per hour
-    const sunrise = new Date(day.sunrise);
-    const sunset = new Date(day.sunset);
-    const daylightHours = (sunset.getTime() - sunrise.getTime()) / (1000 * 60 * 60);
-    score += Math.min(daylightHours, 16); // Cap at 16 hours
-
-    return Math.round(score);
-  };
-
-  // Find the best day from forecast
-  const findBestDayIndex = (forecast: DailyForecast[]): number => {
-    let bestIndex = 0;
-    let bestScore = -1;
-    let bestTemp = -999;
-
-    forecast.forEach((day, index) => {
-      const score = calculateWeatherScore(day);
-      if (score > bestScore) {
-        bestScore = score;
-        bestTemp = day.tempMax;
-        bestIndex = index;
-      } else if (score === bestScore) {
-        // Tiebreaker: higher temperature wins
-        if (day.tempMax > bestTemp) {
-          bestTemp = day.tempMax;
-          bestIndex = index;
-        }
-      }
-    });
-
-    return bestIndex;
-  };
-
-  // Seeded random generator for consistent but unique per-card randomness
-  const seededRandom = (seed: number) => {
-    const x = Math.sin(seed) * 10000;
-    return x - Math.floor(x);
-  };
-
-  // Generate unique particle props for each card based on seed
-  const generateParticlePropsForCard = (seed: number, isTodayCard: boolean) => {
-    const rainCount = isTodayCard ? 20 : 10;
-    const cloudCount = isTodayCard ? 6 : 3;
-
-    const rainProps = Array.from({ length: rainCount }, (_, i) => ({
-      left: seededRandom(seed * 100 + i * 7) * 100,
-      delay: seededRandom(seed * 200 + i * 13) * 2,
-      duration: 1.5 + seededRandom(seed * 300 + i * 17) * 1,
-    }));
-
-    const cloudProps = Array.from({ length: cloudCount }, (_, i) => ({
-      top: seededRandom(seed * 400 + i * 19) * (isTodayCard ? 90 : 80),
-      delay: seededRandom(seed * 500 + i * 23) * 6,
-      duration: 16 + seededRandom(seed * 600 + i * 29) * 12,
-      width: (isTodayCard ? 200 : 140) + seededRandom(seed * 700 + i * 31) * (isTodayCard ? 180 : 120),
-      height: (isTodayCard ? 90 : 60) + seededRandom(seed * 800 + i * 37) * (isTodayCard ? 80 : 50),
-    }));
-
-    const snowCount = isTodayCard ? 20 : 10;
-    const snowProps = Array.from({ length: snowCount }, (_, i) => ({
-      left: (i + 1) * (100 / (snowCount + 1)) + seededRandom(seed * 900 + i * 41) * 5 - 2.5,
-      delay: seededRandom(seed * 1000 + i * 43) * 0.3,
-    }));
-
-    return { rainProps, cloudProps, snowProps };
-  };
-
-  const renderParticles = (weatherCode: number, isTodayCard: boolean = false, cardSeed: number = 0) => {
-    if (!animationsEnabled) return null;
-
-    const weatherClass = getWeatherClass(weatherCode);
-    const particleProps = generateParticlePropsForCard(cardSeed, isTodayCard);
-
-    // Rain particles - Today: 20 drops, Forecast: 10 drops
-    if (weatherClass === 'weather-rain') {
-      return (
-        <div className="weather-particles">
-          {particleProps.rainProps.map((props, i) => (
-            <div 
-              key={i} 
-              className={`rain-drop ${isTodayCard ? '' : 'forecast-particle'}`}
-              style={{ 
-                left: `${props.left}%`, 
-                animationDelay: `${props.delay}s`,
-                animationDuration: `${props.duration}s`
-              }} 
-            />
-          ))}
-        </div>
-      );
-    }
-
-    // Snow particles - Today: 20 snowflakes, Forecast: 10 snowflakes
-    if (weatherClass === 'weather-snow') {
-      return (
-        <div className="weather-particles">
-          {particleProps.snowProps.map((props, i) => (
-            <div 
-              key={i} 
-              className={`snowflake ${isTodayCard ? '' : 'forecast-particle'}`}
-              style={{ 
-                left: `${props.left}%`, 
-                animationDelay: `${props.delay}s` 
-              }} 
-            />
-          ))}
-        </div>
-      );
-    }
-
-    // Cloud wisps - Today: 6 wisps, Forecast: 3 wisps
-    if (weatherClass === 'weather-cloudy') {
-      return (
-        <div className="weather-particles">
-          {particleProps.cloudProps.map((props, i) => (
-            <div 
-              key={i} 
-              className={`cloud-wisp ${isTodayCard ? '' : 'forecast-particle'}`}
-              style={{ 
-                top: `${props.top}%`, 
-                animationDelay: `${props.delay}s`,
-                animationDuration: `${props.duration}s`,
-                width: `${props.width}px`,
-                height: `${props.height}px`
-              }} 
-            />
-          ))}
-        </div>
-      );
-    }
-
-    // Fog layers - Same for both (4 layers)
-    if (weatherClass === 'weather-fog') {
-      return (
-        <div className="weather-particles">
-          {[...Array(4)].map((_, i) => (
-            <div 
-              key={i} 
-              className={`fog-layer ${isTodayCard ? '' : 'forecast-particle'}`}
-              style={{ 
-                top: `${15 + i * 25}%`, 
-                animationDelay: `${i * 1.5 + seededRandom(cardSeed * 50 + i) * 2}s` 
-              }} 
-            />
-          ))}
-        </div>
-      );
-    }
-
-    return null;
-  };
-
-  const matchingFavorite = favorites.find(
-    (fav) => fav.lat === location.lat && fav.lon === location.lon
+function StatPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <span className="text-white/40 text-xs tracking-[0.2em] uppercase font-medium leading-none">
+        {label}
+      </span>
+      <span className="text-white text-2xl font-semibold tabular-nums leading-tight">
+        {value}
+      </span>
+    </div>
   );
-  const locationDisplay = matchingFavorite?.name || `(${location.lat}, ${location.lon})`;
+}
 
-  // Calculate best day from first 8 days of forecast
-  const forecastDays = dailyForecast.slice(0, 8);
-  const bestDayIndex = findBestDayIndex(forecastDays);
+function Divider() {
+  return <div className="w-px h-10 bg-white/15" aria-hidden="true" />;
+}
+
+function SunriseSunset({ sunrise, sunset }: { sunrise: string; sunset: string }) {
+  const fmt = (iso: string) => iso.slice(11, 16);
+  return (
+    <div className="flex items-center gap-6">
+      <div className="flex flex-col items-center gap-1.5">
+        <span className="text-white/40 text-xs tracking-[0.2em] uppercase font-medium leading-none">
+          Sunrise
+        </span>
+        <span className="text-amber-300 text-2xl font-semibold tabular-nums leading-tight">
+          🌅 {fmt(sunrise)}
+        </span>
+      </div>
+      <Divider />
+      <div className="flex flex-col items-center gap-1.5">
+        <span className="text-white/40 text-xs tracking-[0.2em] uppercase font-medium leading-none">
+          Sunset
+        </span>
+        <span className="text-orange-300 text-2xl font-semibold tabular-nums leading-tight">
+          🌇 {fmt(sunset)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function MoonPill({ phase, illumination }: { phase: number; illumination: number }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <span className="text-white/40 text-xs tracking-[0.2em] uppercase font-medium leading-none">
+        Moon
+      </span>
+      <span className="text-indigo-200 text-2xl font-semibold tabular-nums leading-tight">
+        <span className="mr-1">{getMoonEmoji(phase)}</span>
+        {illumination}%
+      </span>
+    </div>
+  );
+}
+
+function HourlyStrip({
+  hours,
+  convertTemp,
+  tempUnit,
+}: {
+  hours: HourForecast[];
+  convertTemp: (c: number) => number;
+  tempUnit: 'C' | 'F';
+}) {
+  if (!hours.length) return null;
+  const temps = hours.map(h => convertTemp(h.temperature));
+  const tMin = Math.round(Math.min(...temps));
+  const tMax = Math.round(Math.max(...temps));
 
   return (
-    <div className="weather-container">
-      {/* Today Section*/}
-      <div className={`weather-card today ${animationsEnabled ? getWeatherClass(todayWeather.weatherCode) : ''}`}>
-        {renderParticles(todayWeather.weatherCode, true, 1)}
-        <h2>Today at {locationDisplay}</h2>
-        <div className="current-weather">
-          <div className="temperature-section">
-            {getWeatherIcon(todayWeather.weatherCode, 90)}
-            <span className="temperature">{convertTemp(todayWeather.temperature).toFixed(0)}°{tempUnit}</span>
-          </div>
-          <p className="condition"><strong>{weatherDescription(todayWeather.weatherCode)}</strong></p>
-          <p className="feels-like">RealFeel® <span className="value">{convertTemp(todayWeather.apparentTemperature).toFixed(0)}°</span></p>
-        </div>
-        <div className="key-metrics">
-          <p><strong>High:</strong> <span className="value">{convertTemp(dailyForecast[0].tempMax).toFixed(0)}°{tempUnit}</span></p>
-          <p><strong>Low:</strong> <span className="value">{convertTemp(dailyForecast[0].tempMin).toFixed(0)}°{tempUnit}</span></p>
-          <p><strong>Wind:</strong> <span className="value">{windDirectionText(todayWeather.windDirection)} {convertWindSpeed(todayWeather.windSpeed).toFixed(0)} {windUnitLabel}</span></p>
-        </div>
-        <div className="additional-metrics">
-          <p><strong>Precipitation:</strong> <span className="value">{todayWeather.precipitation}mm</span></p>
-          <p><strong>Precipitation Chance:</strong> <span className="value">{todayWeather.precipitationProbability}%</span></p>
-          <p><strong>Snow:</strong> <span className="value">{todayWeather.snowfall}cm</span></p>
-          <p><strong>Humidity:</strong> <span className="value">{todayWeather.humidity}%</span></p>
-          <p><strong>Visibility:</strong> <span className="value">{convertVisibility(todayWeather.visibility).toFixed(1)} {tempUnit === 'F' ? 'mi' : 'km'}</span></p>
-          <p><strong>Cloud Cover:</strong> <span className="value">{todayWeather.cloudCover}%</span></p>
-          <p><strong>Dew Point:</strong> <span className="value">{convertTemp(todayWeather.dewpoint).toFixed(0)}°{tempUnit}</span></p>
-          <div className="sun-times">
-            <div className="sun-pair">
-              <div className="sun-time-item">
-                <span className="sun-moon-icon">🌅</span>
-                <span className="sun-moon-text">{new Date(dailyForecast[0].sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-              </div>
-              <div className="sun-time-item">
-                <span className="sun-moon-icon">🌇</span>
-                <span className="sun-moon-text">{new Date(dailyForecast[0].sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-              </div>
-            </div>
-            <div className="moon-item">
-              <MoonIcon phase={dailyForecast[0].moonPhase} size={22} />
-              <span className="sun-moon-text">{getMoonPhaseName(dailyForecast[0].moonPhase)} ({dailyForecast[0].moonIllumination}%)</span>
-            </div>
-          </div>
-        </div>
-        <p className="updated">Updated: {new Date(todayWeather.time).toLocaleTimeString()}</p>
+    <div className="px-6 py-4 w-full max-w-6xl border-t border-white/10">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-white/45 text-xs uppercase tracking-[0.2em] font-medium">
+          Next {hours.length} hours
+        </span>
+        <span className="text-white/30 text-xs tabular-nums">
+          {tMin}°–{tMax}°{tempUnit}
+        </span>
       </div>
 
-      {/* Next 8 Days Section*/}
-      <div className="forecast-section">
-        <div className="forecast-list">
-          {forecastDays.map((day, index) => {
-            const score = calculateWeatherScore(day);
-            const isBestDay = index === bestDayIndex;
-            return (
-              <div key={index} className={`forecast-card ${animationsEnabled ? getWeatherClass(day.weatherCode) : ''} ${isBestDay ? 'best-day' : ''}`}>
-                {renderParticles(day.weatherCode, false, index + 2)}
-                <h3>{new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</h3>
-                <p className="weather-icon-container">{getWeatherIcon(day.weatherCode)}</p>
-              <p><span className="value">{weatherDescription(day.weatherCode)}</span></p>
-              <p><strong>Score:</strong> <span className="value">{score}/100</span></p>
-                <p><strong>High:</strong> <span className="value">{convertTemp(day.tempMax).toFixed(1)}°{tempUnit}</span></p>
-                <p><strong>Low:</strong> <span className="value">{convertTemp(day.tempMin).toFixed(1)}°{tempUnit}</span></p>
-                <p><strong>Precipitation:</strong> <span className="value">{day.precipitationSum} mm</span></p>
-                <p><strong>Wind Max:</strong> <span className="value">{convertWindSpeed(day.windSpeedMax).toFixed(1)} {windUnitLabel}</span></p>
-                <div className="sun-moon-info">
-                  <div className="sun-pair">
-                    <div className="sun-time-item">
-                      <span className="sun-moon-icon">🌅</span>
-                      <span className="sun-moon-text">{new Date(day.sunrise).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                    </div>
-                    <div className="sun-time-item">
-                      <span className="sun-moon-icon">🌇</span>
-                      <span className="sun-moon-text">{new Date(day.sunset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                    </div>
-                  </div>
-                  <div className="moon-item">
-                    <MoonIcon phase={day.moonPhase} size={22} />
-                    <span className="sun-moon-text">{getMoonPhaseName(day.moonPhase)} ({day.moonIllumination}%)</span>
-                  </div>
-                </div>
+      <div className="flex w-full">
+        {hours.map(h => {
+          const { emoji, label } = describeWeatherCode(h.weatherCode, h.isDay);
+          return (
+            <div
+              key={h.time}
+              className={`flex flex-col items-center flex-1 gap-1 py-1 rounded-md ${
+                h.isNow ? 'bg-white/10' : ''
+              }`}
+            >
+              <span
+                className={`text-xs tabular-nums tracking-wide ${
+                  h.isNow ? 'text-white font-semibold' : 'text-white/40'
+                }`}
+              >
+                {h.isNow ? 'Now' : h.hourLabel}
+              </span>
+              <span className="text-xl leading-none" role="img" aria-label={label}>
+                {emoji}
+              </span>
+              <span className="text-white/85 text-sm tabular-nums font-semibold">
+                {Math.round(convertTemp(h.temperature))}°
+              </span>
+              <div className="w-3/4 h-1 rounded-full bg-white/10 overflow-hidden mt-0.5">
+                {h.precipProbability >= 10 && (
+                  <div
+                    className="h-full bg-sky-400/70"
+                    style={{ width: `${h.precipProbability}%` }}
+                    title={`${h.precipProbability}% chance of precipitation`}
+                  />
+                )}
               </div>
-            );
-          })}
+              <span
+                className={`text-[10px] tabular-nums leading-none ${
+                  h.precipProbability >= 30 ? 'text-sky-300/80' : 'text-transparent'
+                }`}
+              >
+                {h.precipProbability}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ForecastCard({
+  day,
+  isBest,
+  score,
+  convertTemp,
+}: {
+  day: DailyForecast;
+  isBest: boolean;
+  score: number;
+  convertTemp: (c: number) => number;
+}) {
+  const { label, emoji } = describeWeatherCode(day.weatherCode, true);
+  const dayLabel = formatDayLabel(day.date);
+
+  return (
+    <div
+      className={[
+        'relative flex flex-col items-center gap-1 px-4 py-4 w-[150px]',
+        'rounded-2xl border transition-colors',
+        isBest
+          ? 'border-amber-300/40 bg-amber-300/5 shadow-[0_0_30px_-10px_rgba(252,211,77,0.4)]'
+          : 'border-white/10 bg-white/[0.02]',
+      ].join(' ')}
+    >
+      {isBest && (
+        <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-300/90 text-black text-[10px] font-bold tracking-widest uppercase">
+          Best
+        </span>
+      )}
+
+      <span className="text-white/55 text-sm font-medium tracking-wide h-5 flex items-center">
+        {dayLabel}
+      </span>
+
+      <span
+        className="text-4xl glow-soft leading-none h-12 flex items-center"
+        role="img"
+        aria-label={label}
+      >
+        {emoji}
+      </span>
+
+      <span
+        className="text-white/45 text-xs text-center leading-tight w-full h-8 overflow-hidden flex items-center justify-center px-1"
+        title={label}
+      >
+        {label}
+      </span>
+
+      <div className="flex gap-2 text-lg font-semibold tabular-nums h-6 items-center">
+        <span className="text-white">{Math.round(convertTemp(day.tempMax))}°</span>
+        <span className="text-white/40">{Math.round(convertTemp(day.tempMin))}°</span>
+      </div>
+
+      <div className="flex items-center gap-2 text-[11px] tabular-nums">
+        <span className="text-sky-300/80 h-4 flex items-center min-w-[3.5em] text-right">
+          {day.precipitationSum > 0 ? `${day.precipitationSum.toFixed(1)} mm` : ''}
+        </span>
+      </div>
+
+      <div className="mt-1 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-white/35">
+        <span>Score</span>
+        <span className={`tabular-nums font-bold ${isBest ? 'text-amber-300' : 'text-white/70'}`}>
+          {score}
+        </span>
+      </div>
+
+      <span className="text-base mt-0.5" role="img" aria-label="moon phase" title={getMoonPhaseName(day.moonPhase)}>
+        {getMoonEmoji(day.moonPhase)}
+      </span>
+      <span className="text-[10px] text-white/35 tabular-nums leading-none">
+        {day.moonIllumination}%
+      </span>
+
+      {/* Marks the top with the gradient hairline (matches widget look) */}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Day-scoring (kept from original tinyweather logic)
+// ---------------------------------------------------------------------------
+
+function calculateWeatherScore(day: DailyForecast): number {
+  let score = 0;
+
+  if (day.precipitationSum === 0) score += 50;
+
+  if (day.weatherCode === 0) score += 40;
+  else if (day.weatherCode >= 1 && day.weatherCode <= 3) score += 20;
+
+  const tempAvg = (day.tempMax + day.tempMin) / 2;
+  if (tempAvg >= 18 && tempAvg <= 25) score += 30;
+  else if (tempAvg >= 15 && tempAvg <= 28) score += 15;
+
+  if (day.windSpeedMax < 20) score += 10;
+  else if (day.windSpeedMax < 30) score += 5;
+
+  const sunrise = new Date(day.sunrise);
+  const sunset = new Date(day.sunset);
+  const daylightHours = (sunset.getTime() - sunrise.getTime()) / (1000 * 60 * 60);
+  score += Math.min(daylightHours, 16);
+
+  return Math.round(score);
+}
+
+function findBestDayIndex(forecast: DailyForecast[]): number {
+  let bestIndex = 0;
+  let bestScore = -1;
+  let bestTemp = -999;
+  forecast.forEach((day, index) => {
+    const score = calculateWeatherScore(day);
+    if (score > bestScore || (score === bestScore && day.tempMax > bestTemp)) {
+      bestScore = score;
+      bestTemp = day.tempMax;
+      bestIndex = index;
+    }
+  });
+  return bestIndex;
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
+export const WeatherDisplay = ({
+  todayWeather,
+  hourlyForecast,
+  dailyForecast,
+  location,
+  tempUnit,
+  windUnit,
+  favorites,
+  animationsEnabled,
+}: WeatherDisplayProps) => {
+  // ----- Empty / loading states -----
+  if (!location) {
+    return (
+      <div className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden">
+        <AmbientBackground tone="violet" />
+        <div className="relative z-10 flex flex-col items-center gap-3 px-6 text-center">
+          <span className="text-6xl">🌍</span>
+          <h1 className="text-3xl font-light text-gradient">Welcome to TinyWeather</h1>
+          <p className="text-white/55 max-w-sm">
+            Open the menu in the top-left to set a location and get started.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!todayWeather || !dailyForecast.length) {
+    return (
+      <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
+        <AmbientBackground tone="cool" />
+        <span className="relative z-10 text-white/45 text-2xl tracking-wide animate-pulse">
+          Loading weather…
+        </span>
+      </div>
+    );
+  }
+
+  // ----- Conversions -----
+  const convertTemp = (c: number) => (tempUnit === 'F' ? (c * 9) / 5 + 32 : c);
+  const convertWindSpeed = (kmh: number) => (windUnit === 'mph' ? kmh / 1.609344 : kmh);
+  const windUnitLabel = windUnit === 'mph' ? 'mph' : 'km/h';
+  const convertVisibility = (m: number) => (tempUnit === 'F' ? m / 1609.344 : m / 1000);
+  const visUnitLabel = tempUnit === 'F' ? 'mi' : 'km';
+
+  // ----- Derived values -----
+  const { label, emoji } = describeWeatherCode(todayWeather.weatherCode, todayWeather.isDay);
+  const tone = ambientForWeather(todayWeather.weatherCode, todayWeather.isDay);
+
+  const matchingFavorite = favorites.find(f => f.lat === location.lat && f.lon === location.lon);
+  const locationDisplay =
+    matchingFavorite?.name ?? `${location.lat.toFixed(2)}, ${location.lon.toFixed(2)}`;
+
+  const updatedTime = todayWeather.updatedAt.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const forecastDays = dailyForecast.slice(0, FORECAST_DAYS);
+  const bestDayIndex = findBestDayIndex(forecastDays);
+  const today = forecastDays[0];
+
+  // Animation gating — if the user disabled animations, drop the *-fade-* classes.
+  const a = (cls: string) => (animationsEnabled ? cls : '');
+
+  return (
+    <div className="relative w-full min-h-screen flex flex-col items-center justify-evenly py-8 px-6 lg:px-10 overflow-hidden">
+      <AmbientBackground tone={tone} />
+
+      <div className={`relative z-10 flex flex-col items-center justify-evenly w-full gap-6 ${a('stagger')}`}>
+        {/* Location + updated */}
+        <div className={`flex flex-col items-center gap-1 ${a('anim-fade-up')}`}>
+          <h2 className="text-white/65 text-2xl tracking-wide font-light">{locationDisplay}</h2>
+          <span className="text-white/30 text-xs tabular-nums tracking-widest uppercase">
+            Updated {updatedTime}
+          </span>
+        </div>
+
+        {/* Main conditions */}
+        <div className={`flex items-center gap-10 ${a('anim-scale-in')}`}>
+          <span
+            className="leading-none glow-soft"
+            role="img"
+            aria-label={label}
+            style={{ fontSize: 'clamp(4rem, 10vh, 7rem)' }}
+          >
+            {emoji}
+          </span>
+          <div className="flex flex-col gap-1">
+            <span
+              className="font-bold tabular-nums text-gradient leading-none"
+              style={{ fontSize: 'clamp(3.5rem, 9vh, 6rem)' }}
+            >
+              {Math.round(convertTemp(todayWeather.temperature))}°{tempUnit}
+            </span>
+            <span className="text-white/55 text-lg font-light">
+              Feels like{' '}
+              <span className="text-white/80 tabular-nums">
+                {Math.round(convertTemp(todayWeather.apparentTemperature))}°{tempUnit}
+              </span>{' '}
+              · {label}
+            </span>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className={`flex items-center gap-8 flex-wrap justify-center ${a('anim-fade-up')}`}>
+          <StatPill
+            label="Wind"
+            value={`${windDirectionLabel(todayWeather.windDirection)} ${convertWindSpeed(
+              todayWeather.windSpeed,
+            ).toFixed(0)} ${windUnitLabel}`}
+          />
+          <Divider />
+          <StatPill label="Humidity" value={`${todayWeather.humidity}%`} />
+          <Divider />
+          <StatPill label="Cloud" value={`${todayWeather.cloudCover}%`} />
+          <Divider />
+          <StatPill
+            label="Visibility"
+            value={`${convertVisibility(todayWeather.visibility).toFixed(1)} ${visUnitLabel}`}
+          />
+          <Divider />
+          <StatPill
+            label="High / Low"
+            value={`${Math.round(convertTemp(today.tempMax))}° / ${Math.round(convertTemp(today.tempMin))}°`}
+          />
+          {todayWeather.precipitation > 0 && (
+            <>
+              <Divider />
+              <StatPill label="Precip" value={`${todayWeather.precipitation} mm`} />
+            </>
+          )}
+          <Divider />
+          <SunriseSunset sunrise={today.sunrise} sunset={today.sunset} />
+          <Divider />
+          <MoonPill phase={today.moonPhase} illumination={today.moonIllumination} />
+        </div>
+
+        {/* Hourly forecast strip */}
+        <div className={`w-full flex justify-center ${a('anim-fade-up')}`}>
+          <HourlyStrip
+            hours={hourlyForecast}
+            convertTemp={convertTemp}
+            tempUnit={tempUnit}
+          />
+        </div>
+
+        {/* 7-day forecast */}
+        <div className={`flex gap-3 flex-wrap justify-center items-stretch ${a('anim-fade-up')}`}>
+          {forecastDays.map((day, index) => (
+            <ForecastCard
+              key={day.date}
+              day={day}
+              isBest={index === bestDayIndex}
+              score={calculateWeatherScore(day)}
+              convertTemp={convertTemp}
+            />
+          ))}
         </div>
       </div>
     </div>
