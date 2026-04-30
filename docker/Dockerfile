@@ -1,10 +1,13 @@
 # Build stage
-FROM node:18 AS builder
+FROM node:20 AS builder
 WORKDIR /app
 
-# Copy package files and install all dependencies (including dev)
+# Copy package files and install all dependencies (including dev).
+# Use `npm ci` for a clean, reproducible install — avoids the npm optional-deps
+# bug (https://github.com/npm/cli/issues/4828) that drops native bindings like
+# @tailwindcss/oxide on Linux.
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm ci
 
 # Copy index.html from the project root into the container
 COPY index.html ./
@@ -21,7 +24,7 @@ RUN ls -la /app
 RUN npm run build
 
 # Runtime stage
-FROM node:18-slim
+FROM node:20-slim
 WORKDIR /app
 
 # Install serve globally for production
